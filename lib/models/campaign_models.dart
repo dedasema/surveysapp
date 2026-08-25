@@ -125,22 +125,43 @@ class QuestionOption {
 class AudioTranscriptionResponse {
   final String entregaId;
   final String transcripcion;
+  final List<dynamic> respuestas;
   final Map<String, dynamic> payloadEnviado;
   final Map<String, dynamic> respuestaBackend;
+  final String status;
 
   AudioTranscriptionResponse({
     required this.entregaId,
     required this.transcripcion,
-    required this.payloadEnviado,
-    required this.respuestaBackend,
+    this.respuestas = const [],
+    this.payloadEnviado = const {},
+    this.respuestaBackend = const {},
+    this.status = 'ok',
   });
 
   factory AudioTranscriptionResponse.fromJson(Map<String, dynamic> json) {
+    List<dynamic> parsedRespuestas = [];
+    if (json['respuestas'] is List) {
+      parsedRespuestas = json['respuestas'] as List<dynamic>;
+    } else if (json['payload_enviado'] != null &&
+        json['payload_enviado']['respuestas_preguntas'] is List) {
+      parsedRespuestas =
+          json['payload_enviado']['respuestas_preguntas'] as List<dynamic>;
+    } else if (json['respuestas_preguntas'] is List) {
+      parsedRespuestas = json['respuestas_preguntas'] as List<dynamic>;
+    }
+
     return AudioTranscriptionResponse(
-      entregaId: json['entrega_id'],
-      transcripcion: json['transcripcion'],
-      payloadEnviado: json['payload_enviado'],
-      respuestaBackend: json['respuesta_backend'],
+      entregaId: (json['entrega_id'] ?? '').toString(),
+      transcripcion: (json['transcripcion'] ?? '').toString(),
+      respuestas: parsedRespuestas,
+      payloadEnviado: json['payload_enviado'] is Map<String, dynamic>
+          ? json['payload_enviado'] as Map<String, dynamic>
+          : {},
+      respuestaBackend: json['respuesta_backend'] is Map<String, dynamic>
+          ? json['respuesta_backend'] as Map<String, dynamic>
+          : {},
+      status: (json['status'] ?? 'ok').toString(),
     );
   }
 }

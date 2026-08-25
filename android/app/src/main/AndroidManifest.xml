@@ -1,6 +1,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Permisos de Red y Conectividad -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Permisos Multimedia (Grabación de audio y OCR con cámara) -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Permisos de Almacenamiento (Legacy y Android 13+) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
     <application
-        android:label="surveysapp"
+        android:label="SurveysApp"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

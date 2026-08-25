@@ -4,7 +4,10 @@ import '../services/auth_service.dart';
 import 'profile_screen.dart';
 import 'ocr_screen.dart';
 import 'audio_campaigns_screen.dart';
+import 'operator_stats_screen.dart';
+import 'sync_queue_screen.dart';
 import 'login_screen.dart';
+import '../services/offline_sync_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -54,6 +57,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
+          StreamBuilder<Map<String, int>>(
+            stream: OfflineSyncService.instance.countsStream,
+            builder: (context, snapshot) {
+              final counts = snapshot.data ?? {};
+              final pending = (counts['pending'] ?? 0) + (counts['failed'] ?? 0);
+              return IconButton(
+                icon: Badge(
+                  isLabelVisible: pending > 0,
+                  label: Text('$pending'),
+                  backgroundColor: Colors.orange,
+                  child: Icon(pending > 0 ? Icons.sync_problem : Icons.sync),
+                ),
+                tooltip: 'Cola de sincronización ($pending pendientes)',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SyncQueueScreen()),
+                  );
+                },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
@@ -217,15 +242,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     _buildServiceCard(
                       title: 'Estadísticas',
-                      subtitle: 'Ver reportes y análisis',
+                      subtitle: 'Métricas de campo y cola offline',
                       icon: Icons.analytics,
                       color: const Color(0xFFFF7043),
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Próximamente disponible'),
-                          ),
-                        );
+                        if (_currentUser != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => OperatorStatsScreen(user: _currentUser!),
+                            ),
+                          );
+                        }
                       },
                     ),
                   ],

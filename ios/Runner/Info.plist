@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>SurveysApp necesita acceso a la cámara para capturar y procesar formularios de encuestas con OCR.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>SurveysApp necesita acceso al micrófono para grabar las respuestas de encuestas de voz en campo.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SurveysApp necesita acceso a la galería de fotos para seleccionar imágenes de formularios escaneados.</string>
 </dict>
 </plist>

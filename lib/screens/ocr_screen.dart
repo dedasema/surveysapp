@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/ocr_service.dart';
+import '../services/offline_sync_service.dart';
+import '../models/campaign_models.dart';
+import 'survey_review_screen.dart';
 
 class OCRScreen extends StatefulWidget {
   const OCRScreen({super.key});
@@ -48,6 +51,13 @@ class _OCRScreenState extends State<OCRScreen> {
   Future<void> _processImage() async {
     if (_selectedImage == null) return;
 
+    final isOnline = await OfflineSyncService.instance.isOnline();
+    if (!isOnline) {
+      // Manejo Offline: Encolar la imagen para procesamiento posterior
+      _showOfflineEnqueueDialog();
+      return;
+    }
+
     setState(() {
       _isProcessing = true;
       _ocrResult = null;
@@ -64,7 +74,7 @@ class _OCRScreenState extends State<OCRScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Error al procesar la imagen. '),
+            content: Text('Error al procesar la imagen con OCR en el servidor.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -73,12 +83,57 @@ class _OCRScreenState extends State<OCRScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('¡Imagen procesada exitosamente!'),
+            content: Text('¡Respuestas extraídas con IA con éxito!'),
             backgroundColor: Colors.green,
           ),
         );
       }
     }
+  }
+
+  void _showOfflineEnqueueDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.cloud_off, color: Colors.orange),
+            SizedBox(width: 10),
+            Text('Modo Offline'),
+          ],
+        ),
+        content: const Text(
+          'No tienes conexión a internet en este momento.\n\n'
+          '¿Deseas guardar la foto del formulario en la cola local? Se procesará automáticamente en cuanto recuperes señal.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final entregaId = 'offline_ocr_${DateTime.now().millisecondsSinceEpoch}';
+              await OfflineSyncService.instance.enqueueOCRSurvey(
+                entregaId: entregaId,
+                filePath: _selectedImage!.path,
+              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Formulario encolado para sincronización offline.'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              }
+            },
+            child: const Text('Guardar Offline'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showImageSourceDialog() {
@@ -206,55 +261,72 @@ class _OCRScreenState extends State<OCRScreen> {
             ],
 
             // Respuestas procesadas
-            if (result['ocr_result'] != null &&
-                result['ocr_result']['respuestas_preguntas'] != null) ...[
-              Text(
-                'Respuestas Detectadas:',
-                style: TextStyle(
-                  fontSize: isTablet ? 18 : 16,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1565C0),
-                ),
-              ),
-              SizedBox(height: isTablet ? 12 : 8),
+            () {
+              List<dynamic> respuestas = [];
+              if (result['respuestas'] is List) {
+                respuestas = result['respuestas'] as List;
+              } else if (result['respuestas_preguntas'] is List) {
+                respuestas = result['respuestas_preguntas'] as List;
+              } else if (result['ocr_result'] != null &&
+                  result['ocr_result']['respuestas_preguntas'] is List) {
+                respuestas =
+                    result['ocr_result']['respuestas_preguntas'] as List;
+              }
 
-              ...List.generate(
-                result['ocr_result']['respuestas_preguntas'].length,
+              if (respuestas.isEmpty) return const SizedBox.shrink();
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Respuestas Detectadas:',
+                    style: TextStyle(
+                      fontSize: isTablet ? 18 : 16,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1565C0),
+                    ),
+                  ),
+                  SizedBox(height: isTablet ? 12 : 8),
+                  ...List.generate(
+                    respuestas.length,
                     (index) {
-                  final respuesta = result['ocr_result']['respuestas_preguntas'][index];
-                  return Container(
-                    margin: EdgeInsets.only(bottom: isTablet ? 12.0 : 8.0),
-                    padding: EdgeInsets.all(isTablet ? 16.0 : 12.0),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Respuesta ${index + 1}',
-                          style: TextStyle(
-                            fontSize: isTablet ? 16 : 14,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      final respuesta = respuestas[index];
+                      return Container(
+                        margin: EdgeInsets.only(bottom: isTablet ? 12.0 : 8.0),
+                        padding: EdgeInsets.all(isTablet ? 16.0 : 12.0),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey[300]!),
                         ),
-                        SizedBox(height: isTablet ? 8 : 4),
-                        if (respuesta['texto'] != null)
-                          Text('Texto: ${respuesta['texto']}'),
-                        if (respuesta['numero'] != null)
-                          Text('Número: ${respuesta['numero']}'),
-                        if (respuesta['opcion_id'] != null)
-                          Text('Opción ID: ${respuesta['opcion_id']}'),
-                        Text('Tipo: ${respuesta['tipo_pregunta_id']}'),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              SizedBox(height: isTablet ? 16 : 12),
-            ],
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Respuesta ${index + 1}',
+                              style: TextStyle(
+                                fontSize: isTablet ? 16 : 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: isTablet ? 8 : 4),
+                            if (respuesta['texto'] != null)
+                              Text('Texto: ${respuesta['texto']}'),
+                            if (respuesta['numero'] != null)
+                              Text('Número: ${respuesta['numero']}'),
+                            if (respuesta['opcion_id'] != null)
+                              Text('Opción ID: ${respuesta['opcion_id']}'),
+                            if (respuesta['tipo_pregunta_id'] != null)
+                              Text('Tipo: ${respuesta['tipo_pregunta_id']}'),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  SizedBox(height: isTablet ? 16 : 12),
+                ],
+              );
+            }(),
 
             // Plantilla usada
             if (result['plantilla_usada'] != null) ...[
@@ -315,6 +387,48 @@ class _OCRScreenState extends State<OCRScreen> {
                     );
                   },
                 ),
+            ],
+
+            // Botón para revisar y validar en formulario interactivo
+            if (result['plantilla_usada'] != null && result['entrega_id'] != null) ...[
+              SizedBox(height: isTablet ? 20 : 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final plantilla = SurveyTemplate.fromJson(result['plantilla_usada']);
+                    List<dynamic> respuestas = [];
+                    if (result['respuestas'] is List) {
+                      respuestas = result['respuestas'];
+                    } else if (result['respuestas_preguntas'] is List) {
+                      respuestas = result['respuestas_preguntas'];
+                    } else if (result['ocr_result'] != null &&
+                        result['ocr_result']['respuestas_preguntas'] is List) {
+                      respuestas = result['ocr_result']['respuestas_preguntas'];
+                    }
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SurveyReviewScreen(
+                          entregaId: result['entrega_id'].toString(),
+                          plantilla: plantilla,
+                          initialRespuestas: respuestas,
+                          canalId: 4,
+                          localFilePath: _selectedImage?.path,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.edit_note, size: 22),
+                  label: const Text('Revisar y Validar en Formulario'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1565C0),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
             ],
 
             // URL de la imagen procesada

@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/auth_models.dart';
 
 class AuthService {
-  static const String baseUrl = 'https://surveysbackend-production.up.railway.app';
+  static const String baseUrl = 'https://surveys-backend-83d9.onrender.com';
 
   Future<LoginResponse?> login(String email, String password) async {
     try {

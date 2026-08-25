@@ -98,39 +98,62 @@ $ flutter run -d <device>
 
 ### 3. Endpoints de backend
 
-El `AuthService.baseUrl` apunta por defecto a la instancia de Railway en producción (`https://surveysbackend-production.up.railway.app`).
+El `AuthService.baseUrl` apunta por defecto a la instancia de producción en Render (`https://surveys-backend-83d9.onrender.com`).
 Si corres el backend localmente, cambia la constante en `lib/services/auth_service.dart`.
 
 ---
 
 ## Variables de configuración
 
-| Archivo              | Clave          | Descripción                    |
-| -------------------- | -------------- | ------------------------------ |
-| `auth_service.dart`  | `baseUrl`      | URL del backend FastAPI        |
-| `ocr_service.dart`   | `ocrUrl`       | Microservicio OCR/Whisper      |
-| `audio_service.dart` | `audioBaseUrl` | Endpoints de campañas de audio |
+| Archivo | Constante / Variable | Descripción |
+| :--- | :--- | :--- |
+| `auth_service.dart` | `baseUrl` | URL del backend principal FastAPI en producción (`https://surveys-backend-83d9.onrender.com`) |
+| `audio_service.dart` | `baseUrl` | Endpoint unificado de audio (`/public/entregas/{id}/audio`) |
+| `ocr_service.dart` | `baseUrl` | Endpoint unificado de OCR (`/public/entregas/ocr`) |
 
-Para **builds CI** puedes sobrescribir con `--dart-define` (ejemplo):
+Para **compilaciones personalizadas o CI/CD**, puedes sobrescribir la URL base con `--dart-define`:
 
 ```bash
-flutter run --dart-define=BASE_URL=https://api.miempresa.com \
-           --dart-define=OCR_URL=https://ocr.miempresa.com/ocr
+flutter build apk --release --dart-define=BASE_URL=https://api.tudominio.com
 ```
 
-En el código lee estas variables con `const String.fromEnvironment()`.
+---
+
+## Guía de Compilación para Producción
+
+### 1. Generar Íconos de Aplicación
+Coloca tu imagen en `assets/images/app_icon.png` (1024x1024 px) y ejecuta:
+```bash
+dart run flutter_launcher_icons
+```
+
+### 2. Compilar APK Release (Instalador directo para operadores)
+```bash
+flutter build apk --release
+```
+*El archivo generado estará listo en `build/app/outputs/flutter-apk/app-release.apk`.*
+
+### 3. Compilar App Bundle (Para publicar en Google Play Store)
+```bash
+flutter build appbundle --release
+```
+*El bundle estará en `build/app/outputs/bundle/release/app-release.aab`.*
+
+### 4. Compilar para iOS
+```bash
+flutter build ipa --release
+```
 
 ---
 
 ## Scripts útiles de Flutter
 
-| Comando                       | Descripción                 |
-| ----------------------------- | --------------------------- |
-| `flutter analyze`             | Linter con `flutter_lints`  |
-| `flutter test`                | Ejecuta pruebas unit/widget |
-| `flutter build apk --release` | Build Android producción    |
-| `flutter build ios --release` | Build iOS (requiere Xcode)  |
-| `flutter build web --release` | Build Web SPA               |
+| Comando | Descripción |
+| :--- | :--- |
+| `flutter analyze` | Analizador estático de código |
+| `flutter test` | Ejecuta las pruebas unitarias y de widgets |
+| `flutter clean` | Limpia artefactos de compilación previos |
+| `flutter pub get` | Descarga las dependencias del proyecto |
 
 ---
 

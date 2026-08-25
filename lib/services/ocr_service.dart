@@ -5,11 +5,16 @@ import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart' as path;
 
 class OCRService {
-  static const String ocrUrl = 'https://ocr-micro.up.railway.app/ocr';
+  static const String baseUrl = 'https://surveys-backend-83d9.onrender.com';
 
-  Future<Map<String, dynamic>?> processImage(File imageFile) async {
+  Future<Map<String, dynamic>?> processImage(File imageFile, {String? entregaId}) async {
     try {
-      var request = http.MultipartRequest('POST', Uri.parse(ocrUrl));
+      final uri = Uri.parse('$baseUrl/public/entregas/ocr');
+      var request = http.MultipartRequest('POST', uri);
+
+      if (entregaId != null && entregaId.isNotEmpty) {
+        request.fields['entrega_id'] = entregaId;
+      }
 
       // Headers
       request.headers['accept'] = 'application/json';

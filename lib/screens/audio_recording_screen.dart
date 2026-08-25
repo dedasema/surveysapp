@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/campaign_models.dart';
 import '../services/audio_service.dart';
+import '../services/offline_sync_service.dart';
+import 'survey_review_screen.dart';
 
 class AudioRecordingScreen extends StatefulWidget {
   final AudioSurvey survey;
@@ -208,6 +210,45 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
   Future<void> _sendRecording() async {
     if (_recordingPath == null) return;
 
+    final isOnline = await OfflineSyncService.instance.isOnline();
+    if (!isOnline) {
+      // Modo Offline: Guardar en cola local
+      await OfflineSyncService.instance.enqueueAudioSurvey(
+        entregaId: widget.survey.id,
+        filePath: _recordingPath!,
+      );
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(
+              children: [
+                Icon(Icons.cloud_off, color: Colors.orange),
+                SizedBox(width: 10),
+                Text('Audio Guardado Offline'),
+              ],
+            ),
+            content: const Text(
+              'No tienes conexión a internet.\n\n'
+              'La grabación quedó guardada de forma segura en tu teléfono y se sincronizará automáticamente cuando recuperes señal.',
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Aceptar'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() {
       _isProcessing = true;
     });
@@ -230,9 +271,11 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
         ),
       );
     } finally {
-      setState(() {
-        _isProcessing = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
 
@@ -241,35 +284,52 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Transcripción Completada'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 10),
+            Text('Transcripción IA'),
+          ],
+        ),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'Transcripción:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                'Texto detectado:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  response.transcripcion,
-                  style: const TextStyle(fontSize: 14),
+                  response.transcripcion.isNotEmpty
+                      ? response.transcripcion
+                      : 'Audio procesado',
+                  style: const TextStyle(fontSize: 13),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               const Text(
-                'Respuestas procesadas:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                'Respuestas extraídas:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
-              const SizedBox(height: 8),
-              if (response.payloadEnviado['respuestas_preguntas'] != null)
+              const SizedBox(height: 6),
+              if (response.respuestas.isNotEmpty)
+                ...(response.respuestas.map((respuesta) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '• ${respuesta['texto'] ?? respuesta['numero'] ?? (respuesta['opcion_id'] != null ? 'Opción seleccionada' : 'Respuesta registrada')}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    )))
+              else if (response.payloadEnviado['respuestas_preguntas'] != null)
                 ...((response.payloadEnviado['respuestas_preguntas'] as List)
                     .map((respuesta) => Padding(
                   padding: const EdgeInsets.only(bottom: 4),
@@ -277,7 +337,12 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
                     '• ${respuesta['texto'] ?? respuesta['numero'] ?? 'Opción seleccionada'}',
                     style: const TextStyle(fontSize: 12),
                   ),
-                ))),
+                )))
+              else
+                const Text(
+                  'Sin respuestas detectadas.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
             ],
           ),
         ),
@@ -286,9 +351,31 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
             onPressed: () {
               Navigator.of(context).pop();
               Navigator.of(context).pop();
-              Navigator.of(context).pop();
             },
-            child: const Text('Finalizar'),
+            child: const Text('Cerrar'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SurveyReviewScreen(
+                    entregaId: widget.survey.id,
+                    plantilla: widget.survey.plantilla,
+                    initialRespuestas: response.respuestas,
+                    canalId: 5,
+                    localFilePath: _recordingPath,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.edit_note),
+            label: const Text('Revisar y Validar'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1565C0),
+              foregroundColor: Colors.white,
+            ),
           ),
         ],
       ),

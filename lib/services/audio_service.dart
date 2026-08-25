@@ -6,8 +6,7 @@ import '../models/campaign_models.dart';
 import 'package:http_parser/http_parser.dart';
 
 class AudioService {
-  static const String baseUrl = 'https://surveysbackend-production.up.railway.app';
-  static const String sttUrl = 'https://sttopenai-production.up.railway.app';
+  static const String baseUrl = 'https://surveys-backend-83d9.onrender.com';
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -57,10 +56,8 @@ class AudioService {
 
   Future<AudioTranscriptionResponse> transcribeAudio(String entregaId, File audioFile) async {
     try {
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$sttUrl/stt'),
-      );
+      final uri = Uri.parse('$baseUrl/public/entregas/$entregaId/audio');
+      final request = http.MultipartRequest('POST', uri);
 
       request.headers.addAll({
         'accept': 'application/json',
