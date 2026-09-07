@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/campaign_models.dart';
 import '../services/audio_service.dart';
 import 'audio_recording_screen.dart';
+import 'adaptive_survey_screen.dart';
 
 class AudioSurveysScreen extends StatefulWidget {
   final String campaignId;
@@ -175,12 +176,83 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
       ),
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AudioRecordingScreen(
-                survey: survey,
-                surveyNumber: surveyNumber,
+          showModalBottomSheet(
+            context: context,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (context) => SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Modalidad de Encuesta #$surveyNumber',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      survey.plantilla.nombre,
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                    const Divider(height: 24),
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE91E63).withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.mic, color: Color(0xFFE91E63)),
+                      ),
+                      title: const Text('Grabar Entrevista por Voz', style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text('Grabación continua WAV con transcripción automática por IA.'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AudioRecordingScreen(
+                              survey: survey,
+                              surveyNumber: surveyNumber,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1565C0).withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.dynamic_form, color: Color(0xFF1565C0)),
+                      ),
+                      title: const Text('Encuesta Adaptativa (Una a la vez)', style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text('Flujo guiado donde cada respuesta decide la siguiente pregunta.'),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AdaptiveSurveyScreen(
+                              entregaId: survey.id,
+                              campaignId: widget.campaignId,
+                              campaignName: widget.campaignName,
+                              plantillaFallback: survey.plantilla,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           );

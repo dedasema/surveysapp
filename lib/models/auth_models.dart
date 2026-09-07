@@ -14,14 +14,56 @@ class LoginRequest {
 
 class LoginResponse {
   final String accessToken;
+  final String? refreshToken;
   final String tokenType;
+  final int? expiresIn;
+  final List<String> permissions;
 
-  LoginResponse({required this.accessToken, required this.tokenType});
+  LoginResponse({
+    required this.accessToken,
+    this.refreshToken,
+    required this.tokenType,
+    this.expiresIn,
+    this.permissions = const [],
+  });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
+    List<String> perms = [];
+    if (json['permissions'] is List) {
+      perms = (json['permissions'] as List).map((p) => p.toString()).toList();
+    } else if (json['permisos'] is List) {
+      perms = (json['permisos'] as List).map((p) => p.toString()).toList();
+    }
+
     return LoginResponse(
-      accessToken: json['access_token'],
-      tokenType: json['token_type'],
+      accessToken: json['access_token'] ?? json['accessToken'] ?? '',
+      refreshToken: json['refresh_token'] ?? json['refreshToken'],
+      tokenType: json['token_type'] ?? 'bearer',
+      expiresIn: json['expires_in'] is int ? json['expires_in'] : null,
+      permissions: perms,
+    );
+  }
+}
+
+class TokenRefreshResponse {
+  final String accessToken;
+  final String? refreshToken;
+  final String tokenType;
+  final int? expiresIn;
+
+  TokenRefreshResponse({
+    required this.accessToken,
+    this.refreshToken,
+    this.tokenType = 'bearer',
+    this.expiresIn,
+  });
+
+  factory TokenRefreshResponse.fromJson(Map<String, dynamic> json) {
+    return TokenRefreshResponse(
+      accessToken: json['access_token'] ?? json['accessToken'] ?? '',
+      refreshToken: json['refresh_token'] ?? json['refreshToken'],
+      tokenType: json['token_type'] ?? 'bearer',
+      expiresIn: json['expires_in'] is int ? json['expires_in'] : null,
     );
   }
 }

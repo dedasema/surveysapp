@@ -129,6 +129,8 @@ class AudioTranscriptionResponse {
   final Map<String, dynamic> payloadEnviado;
   final Map<String, dynamic> respuestaBackend;
   final String status;
+  final String? taskId;
+  final bool isAsync;
 
   AudioTranscriptionResponse({
     required this.entregaId,
@@ -137,6 +139,8 @@ class AudioTranscriptionResponse {
     this.payloadEnviado = const {},
     this.respuestaBackend = const {},
     this.status = 'ok',
+    this.taskId,
+    this.isAsync = false,
   });
 
   factory AudioTranscriptionResponse.fromJson(Map<String, dynamic> json) {
@@ -151,6 +155,14 @@ class AudioTranscriptionResponse {
       parsedRespuestas = json['respuestas_preguntas'] as List<dynamic>;
     }
 
+    final rawStatus = (json['status'] ?? json['estado'] ?? 'ok').toString();
+    final taskId = (json['task_id'] ?? json['job_id'])?.toString();
+    final isAsync = (taskId != null && taskId.isNotEmpty) ||
+        rawStatus == 'queued' ||
+        rawStatus == 'processing' ||
+        rawStatus == 'transcribing' ||
+        rawStatus == 'pending';
+
     return AudioTranscriptionResponse(
       entregaId: (json['entrega_id'] ?? '').toString(),
       transcripcion: (json['transcripcion'] ?? '').toString(),
@@ -161,7 +173,9 @@ class AudioTranscriptionResponse {
       respuestaBackend: json['respuesta_backend'] is Map<String, dynamic>
           ? json['respuesta_backend'] as Map<String, dynamic>
           : {},
-      status: (json['status'] ?? 'ok').toString(),
+      status: rawStatus,
+      taskId: taskId,
+      isAsync: isAsync,
     );
   }
 }

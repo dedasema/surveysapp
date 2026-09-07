@@ -90,7 +90,7 @@ class AudioService {
       print('Respuesta STT: ${response.statusCode}');
       print('Cuerpo: ${response.body}');
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 202) {
         final data = json.decode(response.body);
         return AudioTranscriptionResponse.fromJson(data);
       } else {
@@ -100,5 +100,60 @@ class AudioService {
       print('Error en transcribeAudio: $e');
       throw Exception('Error al transcribir audio: $e');
     }
+  }
+
+  Future<AudioTranscriptionResponse?> checkAudioStatus(String entregaId, {String? taskId}) async {
+    try {
+      final endpoint = taskId != null && taskId.isNotEmpty
+          ? '$baseUrl/tasks/$taskId'
+          : '$baseUrl/public/entregas/$entregaId/audio/status';
+
+      final response = await http.get(
+        Uri.parse(endpoint),
+        headers: {'accept': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return AudioTranscriptionResponse.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      print('Error consultando estado de audio: $e');
+      return null;
+    }
+  }
+
+  Future<AudioTranscriptionResponse> pollAudioResult(
+    String entregaId, {
+    String? taskId,
+    void Function(String status)? onStatusChange,
+    Duration timeout = const Duration(seconds: 60),
+    Duration pollInterval = const Duration(seconds: 2),
+  }) async {
+    final startTime = DateTime.now();
+
+    while (DateTime.now().difference(startTime) < timeout) {
+      final statusResp = await checkAudioStatus(entregaId, taskId: taskId);
+
+      if (statusResp != null) {
+        if (onStatusChange != null) {
+          onStatusChange(statusResp.status);
+        }
+
+        if (statusResp.status == 'ok' ||
+            statusResp.status == 'completed' ||
+            statusResp.status == 'completado' ||
+            (statusResp.respuestas.isNotEmpty || statusResp.transcripcion.isNotEmpty)) {
+          return statusResp;
+        } else if (statusResp.status == 'error' || statusResp.status == 'failed') {
+          throw Exception('El procesamiento de audio falló en el servidor.');
+        }
+      }
+
+      await Future.delayed(pollInterval);
+    }
+
+    throw Exception('Tiempo de espera agotado esperando la transcripción de audio.');
   }
 }

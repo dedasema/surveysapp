@@ -249,34 +249,193 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
       return;
     }
 
-    setState(() {
-      _isProcessing = true;
-    });
+    _showAsyncProcessingDialog();
+  }
 
-    try {
-      final audioFile = File(_recordingPath!);
-      final response = await _audioService.transcribeAudio(
-        widget.survey.id,
-        audioFile,
-      );
+  void _showAsyncProcessingDialog() {
+    String currentStage = 'pending'; // 'pending', 'transcribing', 'completed', 'error'
+    String stageMessage = 'Subiendo audio al servidor...';
+    String? errorDetail;
+    StateSetter? dialogSetState;
 
-      if (mounted) {
-        _showTranscriptionResult(response);
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al procesar audio: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            dialogSetState = setModalState;
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Row(
+                children: [
+                  Icon(Icons.hub, color: Color(0xFF1565C0)),
+                  SizedBox(width: 10),
+                  Text('Orquestación Asíncrona', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildStageItem(
+                    title: '1. Recepción y Encolado',
+                    subtitle: 'Audio en cola en el servidor',
+                    state: currentStage == 'pending'
+                        ? 'active'
+                        : (currentStage == 'error' && stageMessage.contains('Subiendo') ? 'error' : 'done'),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStageItem(
+                    title: '2. Transcripción por IA',
+                    subtitle: 'Modelo Gemini transcribiendo voz',
+                    state: currentStage == 'transcribing'
+                        ? 'active'
+                        : (currentStage == 'completed' ? 'done' : (currentStage == 'error' ? 'error' : 'waiting')),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildStageItem(
+                    title: '3. Inferencia de Respuestas',
+                    subtitle: 'Extracción contra la plantilla',
+                    state: currentStage == 'completed' ? 'done' : (currentStage == 'error' ? 'error' : 'waiting'),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: currentStage == 'error' ? Colors.red[50] : Colors.blue[50],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      currentStage == 'error' ? (errorDetail ?? 'Error de procesamiento') : stageMessage,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: currentStage == 'error' ? Colors.red[800] : const Color(0xFF1565C0),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                if (currentStage == 'error')
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Cerrar'),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    // Ejecutar procesamiento asíncrono
+    Future.microtask(() async {
+      try {
+        final audioFile = File(_recordingPath!);
+        final initialResponse = await _audioService.transcribeAudio(
+          widget.survey.id,
+          audioFile,
+        );
+
+        AudioTranscriptionResponse finalResponse = initialResponse;
+
+        if (initialResponse.isAsync) {
+          // Actualizar modal a transcribiendo
+          dialogSetState?.call(() {
+            currentStage = 'transcribing';
+            stageMessage = 'IA transcribiendo y extrayendo respuestas...';
+          });
+
+          // Sondeo asíncrono
+          finalResponse = await _audioService.pollAudioResult(
+            widget.survey.id,
+            taskId: initialResponse.taskId,
+            onStatusChange: (status) {
+              dialogSetState?.call(() {
+                if (status == 'processing' || status == 'transcribing') {
+                  currentStage = 'transcribing';
+                  stageMessage = 'Procesando en worker asíncrono...';
+                }
+              });
+            },
+          );
+        }
+
+        dialogSetState?.call(() {
+          currentStage = 'completed';
+          stageMessage = '¡Completado con éxito!';
+        });
+
+        await Future.delayed(const Duration(milliseconds: 600));
+
+        if (mounted) {
+          Navigator.of(context, rootNavigator: true).pop(); // Cerrar modal de estados
+          _showTranscriptionResult(finalResponse);
+        }
+      } catch (e) {
+        dialogSetState?.call(() {
+          currentStage = 'error';
+          errorDetail = e.toString();
         });
       }
+    });
+  }
+
+  Widget _buildStageItem({
+    required String title,
+    required String subtitle,
+    required String state, // 'waiting', 'active', 'done', 'error'
+  }) {
+    Color iconColor;
+    Widget leadingWidget;
+
+    if (state == 'done') {
+      iconColor = Colors.green;
+      leadingWidget = const Icon(Icons.check_circle, color: Colors.green, size: 22);
+    } else if (state == 'active') {
+      iconColor = const Color(0xFF1565C0);
+      leadingWidget = const SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1565C0)),
+      );
+    } else if (state == 'error') {
+      iconColor = Colors.red;
+      leadingWidget = const Icon(Icons.error, color: Colors.red, size: 22);
+    } else {
+      iconColor = Colors.grey;
+      leadingWidget = const Icon(Icons.radio_button_unchecked, color: Colors.grey, size: 22);
     }
+
+    return Row(
+      children: [
+        leadingWidget,
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: state == 'waiting' ? Colors.grey[600] : Colors.black87,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   void _showTranscriptionResult(AudioTranscriptionResponse response) {
