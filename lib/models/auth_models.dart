@@ -90,15 +90,49 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    String nombre = 'Operador';
+    if (json['nombre_completo'] != null && json['nombre_completo'].toString().trim().isNotEmpty) {
+      nombre = json['nombre_completo'].toString();
+    } else if (json['nombre'] != null && json['nombre'].toString().trim().isNotEmpty) {
+      nombre = json['nombre'].toString();
+    } else if (json['email'] != null && json['email'].toString().contains('@')) {
+      nombre = json['email'].toString().split('@')[0];
+    }
+
+    String estado = 'activo';
+    if (json['estado'] != null) {
+      estado = json['estado'].toString();
+    } else if (json['activo'] != null) {
+      estado = json['activo'] == true ? 'activo' : 'inactivo';
+    }
+
+    DateTime creadoEn = DateTime.now();
+    if (json['creado_en'] != null) {
+      creadoEn = DateTime.tryParse(json['creado_en'].toString()) ?? DateTime.now();
+    }
+
     return User(
-      id: json['id'],
-      email: json['email'],
-      rol: json['rol'],
-      creadoEn: DateTime.parse(json['creado_en']),
-      tipo: json['tipo'],
-      nombre: json['nombre'],
-      telefono: json['telefono'],
-      estado: json['estado'],
+      id: (json['id'] ?? 'operador-id').toString(),
+      email: (json['email'] ?? 'operador@encuestas.com').toString(),
+      rol: (json['rol'] ?? 'operador').toString(),
+      creadoEn: creadoEn,
+      tipo: (json['tipo'] ?? 'operador').toString(),
+      nombre: nombre,
+      telefono: (json['telefono'] ?? '').toString(),
+      estado: estado,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'email': email,
+      'rol': rol,
+      'creado_en': creadoEn.toIso8601String(),
+      'tipo': tipo,
+      'nombre': nombre,
+      'telefono': telefono,
+      'estado': estado,
+    };
   }
 }

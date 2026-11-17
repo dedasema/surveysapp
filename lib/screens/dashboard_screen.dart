@@ -31,10 +31,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _loadUserData() async {
     final authService = AuthService();
     final user = await authService.getCurrentUser();
-    setState(() {
-      _currentUser = user;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _currentUser = user;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _logout() async {
@@ -51,97 +53,159 @@ class _DashboardScreenState extends State<DashboardScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             final config = AppConfigService.instance;
             return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFCBD5E1),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
                   Row(
                     children: [
-                      const Icon(Icons.tune, color: Color(0xFF1565C0)),
-                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.tune, color: Color(0xFF2563EB), size: 20),
+                      ),
+                      const SizedBox(width: 12),
                       const Text(
-                        'Ajustes de Presentación y Alertas',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        'Ajustes de Demostración',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(Icons.close, size: 20, color: Color(0xFF64748B)),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
                   ),
-                  const Divider(),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    secondary: Icon(
-                      Icons.bolt,
-                      color: config.isDemoMode ? Colors.orange : Colors.grey,
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
-                    title: const Text('Modo Presentación / Demo (1s)',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(
-                      config.isDemoMode
-                          ? 'Sondeo ultrarrápido activo (1 seg) para respuesta instantánea.'
-                          : 'Sondeo normal (30 seg) para ahorro de batería.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: config.isDemoMode ? Colors.orange[800] : Colors.grey[600],
-                      ),
+                    child: Column(
+                      children: [
+                        SwitchListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                          secondary: Icon(
+                            Icons.bolt,
+                            color: config.isDemoMode
+                                ? const Color(0xFFD97706)
+                                : const Color(0xFF94A3B8),
+                          ),
+                          title: const Text(
+                            'Modo Presentación / Demo (1s)',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          subtitle: Text(
+                            config.isDemoMode
+                                ? 'Sondeo ultrarrápido activo para respuesta instantánea.'
+                                : 'Sondeo normal (30s) para ahorro de batería.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: config.isDemoMode
+                                  ? const Color(0xFFB45309)
+                                  : const Color(0xFF64748B),
+                            ),
+                          ),
+                          value: config.isDemoMode,
+                          activeColor: const Color(0xFFD97706),
+                          onChanged: (val) async {
+                            await config.setDemoMode(val);
+                            setModalState(() {});
+                            setState(() {});
+                            if (val) {
+                              await NotificationService.instance
+                                  .showTestNotification(isDemo: true);
+                            }
+                          },
+                        ),
+                        const Divider(height: 1, indent: 48, color: Color(0xFFE2E8F0)),
+                        SwitchListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                          secondary: Icon(
+                            Icons.notifications_active_outlined,
+                            color: config.isNotificationsEnabled
+                                ? const Color(0xFF2563EB)
+                                : const Color(0xFF94A3B8),
+                          ),
+                          title: const Text(
+                            'Notificaciones Locales',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          subtitle: const Text(
+                            'Alertas en la barra de Android al transcribir o sincronizar.',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          ),
+                          value: config.isNotificationsEnabled,
+                          activeColor: const Color(0xFF2563EB),
+                          onChanged: (val) async {
+                            await config.setNotificationsEnabled(val);
+                            setModalState(() {});
+                            setState(() {});
+                          },
+                        ),
+                      ],
                     ),
-                    value: config.isDemoMode,
-                    activeColor: Colors.orange,
-                    onChanged: (val) async {
-                      await config.setDemoMode(val);
-                      setModalState(() {});
-                      setState(() {});
-                      if (val) {
-                        await NotificationService.instance.showTestNotification(isDemo: true);
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    secondary: Icon(
-                      Icons.notifications_active,
-                      color: config.isNotificationsEnabled
-                          ? const Color(0xFF1565C0)
-                          : Colors.grey,
-                    ),
-                    title: const Text('Notificaciones Locales Nativas',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: const Text(
-                      'Alertas en la barra de Android al completar transcripción o sincronización.',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    value: config.isNotificationsEnabled,
-                    activeColor: const Color(0xFF1565C0),
-                    onChanged: (val) async {
-                      await config.setNotificationsEnabled(val);
-                      setModalState(() {});
-                      setState(() {});
-                    },
                   ),
                   const SizedBox(height: 16),
-                  Center(
+                  SizedBox(
+                    width: double.infinity,
                     child: OutlinedButton.icon(
-                      icon: const Icon(Icons.notifications_none),
-                      label: const Text('Probar Notificación Nativa'),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      icon: const Icon(Icons.notifications_none, size: 18),
+                      label: const Text(
+                        'Lanzar Notificación de Prueba',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
                       onPressed: () async {
                         await NotificationService.instance.showTestNotification(isDemo: false);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Notificación de prueba enviada a la barra de Android'),
+                              content: Text('Notificación enviada a la barra de Android'),
                               duration: Duration(seconds: 2),
                             ),
                           );
@@ -162,13 +226,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
+        backgroundColor: Color(0xFFF8FAFC),
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
+    final initial = (_currentUser?.nombre.trim().isNotEmpty == true)
+        ? _currentUser!.nombre.trim()[0].toUpperCase()
+        : 'O';
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.how_to_vote_outlined, size: 18, color: Colors.white),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'SurveysApp',
+              style: TextStyle(
+                color: Color(0xFF0F172A),
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+                letterSpacing: -0.3,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+        ),
         actions: [
           StreamBuilder<Map<String, int>>(
             stream: OfflineSyncService.instance.countsStream,
@@ -179,8 +276,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 icon: Badge(
                   isLabelVisible: pending > 0,
                   label: Text('$pending'),
-                  backgroundColor: Colors.orange,
-                  child: Icon(pending > 0 ? Icons.sync_problem : Icons.sync),
+                  backgroundColor: const Color(0xFFD97706),
+                  child: Icon(
+                    pending > 0 ? Icons.sync_problem : Icons.sync,
+                    color: const Color(0xFF475569),
+                    size: 22,
+                  ),
                 ),
                 tooltip: 'Cola de sincronización ($pending pendientes)',
                 onPressed: () {
@@ -196,116 +297,144 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icon(
               Icons.tune,
               color: AppConfigService.instance.isDemoMode
-                  ? Colors.amberAccent
-                  : Colors.white,
+                  ? const Color(0xFFD97706)
+                  : const Color(0xFF475569),
+              size: 22,
             ),
             tooltip: 'Ajustes y Modo Demo',
             onPressed: () => _showDemoSettingsSheet(context),
           ),
           IconButton(
-            icon: const Icon(Icons.person),
+            icon: const Icon(Icons.person_outline, color: Color(0xFF475569), size: 22),
+            tooltip: 'Mi Perfil',
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ProfileScreen(user: _currentUser!),
+                  builder: (context) => ProfileScreen(user: _currentUser),
                 ),
               );
             },
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: Color(0xFF64748B), size: 20),
+            tooltip: 'Cerrar Sesión',
             onPressed: _logout,
           ),
         ],
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF5F5F5),
-              Color(0xFFE3F2FD),
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              // Tarjeta de Usuario Minimalista
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundColor: const Color(0xFF1565C0),
-                        child: Text(
-                          _currentUser?.nombre.substring(0, 1).toUpperCase() ?? 'U',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFC7D2FE)),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF4338CA),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Bienvenido, ${_currentUser?.nombre ?? 'Usuario'}',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _currentUser?.nombre ?? 'Operador de Campo',
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
+                              letterSpacing: -0.2,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _currentUser?.email ?? '',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            _currentUser?.email ?? 'Sesión activa en terreno',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF64748B),
                             ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _currentUser?.estado == 'activo'
-                                    ? Colors.green[100]
-                                    : Colors.red[100],
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                _currentUser?.estado.toUpperCase() ?? '',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: _currentUser?.estado == 'activo'
-                                      ? Colors.green[800]
-                                      : Colors.red[800],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  (_currentUser?.rol ?? 'operador').toUpperCase(),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF475569),
+                                    letterSpacing: 0.4,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF16A34A),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              const Text(
+                                'En línea',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF16A34A),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
+
+              // Banner Modo Demo
               AnimatedBuilder(
                 animation: AppConfigService.instance,
                 builder: (context, _) {
@@ -313,118 +442,131 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     return const SizedBox.shrink();
                   }
                   return Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
+                    margin: const EdgeInsets.only(top: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: Colors.amber[100],
-                      border: Border.all(color: Colors.amber[800]!),
-                      borderRadius: BorderRadius.circular(8),
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFDE68A)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.bolt, color: Colors.amber[900], size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
+                        const Icon(Icons.bolt, color: Color(0xFFD97706), size: 20),
+                        const SizedBox(width: 10),
+                        const Expanded(
                           child: Text(
                             'Modo Demo Activo (Sondeo rápido 1s)',
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                               fontSize: 13,
-                              color: Colors.amber[900],
+                              color: Color(0xFF92400E),
                             ),
                           ),
                         ),
                         TextButton(
                           onPressed: () => _showDemoSettingsSheet(context),
                           style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(50, 30),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text('Ajustes',
-                              style: TextStyle(fontSize: 12)),
+                          child: const Text(
+                            'Configurar',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ],
                     ),
                   );
                 },
               ),
+
               const SizedBox(height: 24),
-              const Text(
-                'Servicios Disponibles',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+
+              // Sección Servicios
+              const Row(
+                children: [
+                  Text(
+                    'Servicios de Campo',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  children: [
-                    _buildServiceCard(
-                      title: 'Encuestas OCR',
-                      subtitle: 'Procesar encuestas con IA',
-                      icon: Icons.camera_alt,
-                      color: const Color(0xFF1565C0),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const OCRScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildServiceCard(
-                      title: 'Encuestas por Audio',
-                      subtitle: 'Grabar respuestas de voz',
-                      icon: Icons.mic,
-                      color: const Color(0xFFE91E63),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AudioCampaignsScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildServiceCard(
-                      title: 'Mi Perfil',
-                      subtitle: 'Ver información personal',
-                      icon: Icons.person,
-                      color: const Color(0xFF388E3C),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProfileScreen(user: _currentUser!),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildServiceCard(
-                      title: 'Estadísticas',
-                      subtitle: 'Métricas de campo y cola offline',
-                      icon: Icons.analytics,
-                      color: const Color(0xFFFF7043),
-                      onTap: () {
-                        if (_currentUser != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => OperatorStatsScreen(user: _currentUser!),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 14),
+
+              // Grid de Servicios con Proporciones Perfectas
+              GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 1.15,
+                children: [
+                  _buildServiceCard(
+                    title: 'Encuestas OCR',
+                    subtitle: 'Escanear formularios físicos con IA',
+                    icon: Icons.document_scanner_outlined,
+                    iconColor: const Color(0xFF2563EB),
+                    iconBgColor: const Color(0xFFEFF6FF),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const OCRScreen()),
+                      );
+                    },
+                  ),
+                  _buildServiceCard(
+                    title: 'Encuestas por Audio',
+                    subtitle: 'Respuestas de voz y transcripción',
+                    icon: Icons.mic_none_outlined,
+                    iconColor: const Color(0xFF059669),
+                    iconBgColor: const Color(0xFFECFDF5),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const AudioCampaignsScreen()),
+                      );
+                    },
+                  ),
+                  _buildServiceCard(
+                    title: 'Estadísticas',
+                    subtitle: 'Métricas de campo y cola outbox',
+                    icon: Icons.bar_chart_outlined,
+                    iconColor: const Color(0xFFD97706),
+                    iconBgColor: const Color(0xFFFFFBEB),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OperatorStatsScreen(user: _currentUser),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildServiceCard(
+                    title: 'Mi Perfil',
+                    subtitle: 'Credenciales y ajustes de demo',
+                    icon: Icons.person_outline,
+                    iconColor: const Color(0xFF475569),
+                    iconBgColor: const Color(0xFFF1F5F9),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProfileScreen(user: _currentUser),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -436,64 +578,73 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String title,
     required String subtitle,
     required IconData icon,
-    required Color color,
+    required Color iconColor,
+    required Color iconBgColor,
     required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.015),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                color.withOpacity(0.1),
-                color.withOpacity(0.05),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(icon, color: iconColor, size: 22),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF64748B),
+                        height: 1.25,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ],
             ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  size: 32,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
           ),
         ),
       ),

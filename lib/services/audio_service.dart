@@ -6,37 +6,34 @@ import '../models/campaign_models.dart';
 import 'package:http_parser/http_parser.dart';
 import 'app_config_service.dart';
 import 'notification_service.dart';
+import 'auth_service.dart';
 
 class AudioService {
   static const String baseUrl = 'https://surveys-backend-83d9.onrender.com';
+  final AuthService _authService = AuthService();
 
   Future<String?> _getToken() async {
+    final token = await _authService.getAccessToken();
+    if (token != null && token.isNotEmpty) return token;
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
   }
 
   Future<List<Campaign>> getAudioCampaigns() async {
-    final token = await _getToken();
-    if (token == null) throw Exception('No token found');
-
-    final response = await http.get(
+    final response = await _authService.authenticatedGet(
       Uri.parse('$baseUrl/campanas'),
-      headers: {
-        'accept': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
     );
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
-      // Filtrar solo las campañas de audio (canal_id = 5)
+      // Filtrar solo las campañas de audio (canal_id = 5) o todas si no tienen canal especificado
       final audioCampaigns = data
-          .where((campaign) => campaign['canal_id'] == 5)
+          .where((campaign) => campaign['canal_id'] == 5 || campaign['canal_id'] == null)
           .map((campaign) => Campaign.fromJson(campaign))
           .toList();
       return audioCampaigns;
     } else {
-      throw Exception('Failed to load campaigns: ${response.statusCode}');
+      throw Exception('Error al cargar campañas: ${response.statusCode} - ${response.body}');
     }
   }
 

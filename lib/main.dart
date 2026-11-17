@@ -76,12 +76,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   Future<void> _checkAuthStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('access_token');
+    final authService = AuthService();
+    final token = await authService.getAccessToken();
 
-    if (token != null) {
-      // Verificar si el token es válido
-      final authService = AuthService();
+    if (token != null && token.isNotEmpty) {
       final user = await authService.getCurrentUser();
       setState(() {
         _isLoggedIn = user != null;

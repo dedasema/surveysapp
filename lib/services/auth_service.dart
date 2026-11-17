@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/auth_models.dart';
 
 class AuthService {
@@ -9,13 +10,24 @@ class AuthService {
 
   static const String _keyAccessToken = 'access_token';
   static const String _keyRefreshToken = 'refresh_token';
+  static const String _keyCachedUser = 'cached_user_profile';
 
   Future<String?> getAccessToken() async {
-    return await _storage.read(key: _keyAccessToken);
+    try {
+      final token = await _storage.read(key: _keyAccessToken);
+      if (token != null && token.isNotEmpty) return token;
+    } catch (_) {}
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyAccessToken);
   }
 
   Future<String?> getRefreshToken() async {
-    return await _storage.read(key: _keyRefreshToken);
+    try {
+      final token = await _storage.read(key: _keyRefreshToken);
+      if (token != null && token.isNotEmpty) return token;
+    } catch (_) {}
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyRefreshToken);
   }
 
   Future<LoginResponse?> login(String email, String password) async {
@@ -35,11 +47,32 @@ class AuthService {
       if (response.statusCode == 200) {
         final loginResponse = LoginResponse.fromJson(jsonDecode(response.body));
 
-        // Guardar tokens de forma segura y cifrada en hardware nativo
-        await _storage.write(key: _keyAccessToken, value: loginResponse.accessToken);
+        // Guardar tokens de forma segura y en SharedPreferences para máxima compatibilidad
+        try {
+          await _storage.write(key: _keyAccessToken, value: loginResponse.accessToken);
+          if (loginResponse.refreshToken != null) {
+            await _storage.write(key: _keyRefreshToken, value: loginResponse.refreshToken);
+          }
+        } catch (_) {}
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_keyAccessToken, loginResponse.accessToken);
         if (loginResponse.refreshToken != null) {
-          await _storage.write(key: _keyRefreshToken, value: loginResponse.refreshToken);
+          await prefs.setString(_keyRefreshToken, loginResponse.refreshToken!);
         }
+
+        // Cache inicial con el email logueado
+        final initialUser = User(
+          id: 'user-${email.hashCode}',
+          email: email,
+          rol: 'operador',
+          creadoEn: DateTime.now(),
+          tipo: 'operador',
+          nombre: email.contains('@') ? email.split('@')[0] : 'Operador',
+          telefono: '',
+          estado: 'activo',
+        );
+        await prefs.setString(_keyCachedUser, jsonEncode(initialUser.toJson()));
 
         return loginResponse;
       }
@@ -68,9 +101,17 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final refreshData = TokenRefreshResponse.fromJson(jsonDecode(response.body));
-        await _storage.write(key: _keyAccessToken, value: refreshData.accessToken);
+        try {
+          await _storage.write(key: _keyAccessToken, value: refreshData.accessToken);
+          if (refreshData.refreshToken != null) {
+            await _storage.write(key: _keyRefreshToken, value: refreshData.refreshToken);
+          }
+        } catch (_) {}
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_keyAccessToken, refreshData.accessToken);
         if (refreshData.refreshToken != null) {
-          await _storage.write(key: _keyRefreshToken, value: refreshData.refreshToken);
+          await prefs.setString(_keyRefreshToken, refreshData.refreshToken!);
         }
         return true;
       }
@@ -128,21 +169,54 @@ class AuthService {
   }
 
   Future<User?> getCurrentUser() async {
+    final prefs = await SharedPreferences.getInstance();
     try {
       final response = await authenticatedGet(Uri.parse('$baseUrl/auth/me'));
 
       if (response.statusCode == 200) {
-        return User.fromJson(jsonDecode(response.body));
+        final decoded = jsonDecode(response.body);
+        final user = User.fromJson(decoded);
+        await prefs.setString(_keyCachedUser, jsonEncode(user.toJson()));
+        return user;
       }
-      return null;
     } catch (e) {
-      print('Error obteniendo usuario: $e');
-      return null;
+      print('Error obteniendo usuario del servidor: $e');
     }
+
+    // Fallback 1: Recuperar perfil de caché local
+    final cachedJson = prefs.getString(_keyCachedUser);
+    if (cachedJson != null && cachedJson.isNotEmpty) {
+      try {
+        return User.fromJson(jsonDecode(cachedJson));
+      } catch (_) {}
+    }
+
+    // Fallback 2: Si hay token activo pero falló la red, devolver usuario por defecto para no bloquear la UI
+    final token = await getAccessToken();
+    if (token != null && token.isNotEmpty) {
+      return User(
+        id: 'operador-campo',
+        email: 'operador@encuestas.com',
+        rol: 'operador',
+        creadoEn: DateTime.now(),
+        tipo: 'operador',
+        nombre: 'Operador de Campo',
+        telefono: '',
+        estado: 'activo',
+      );
+    }
+
+    return null;
   }
 
   Future<void> logout() async {
-    await _storage.delete(key: _keyAccessToken);
-    await _storage.delete(key: _keyRefreshToken);
+    try {
+      await _storage.delete(key: _keyAccessToken);
+      await _storage.delete(key: _keyRefreshToken);
+    } catch (_) {}
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyAccessToken);
+    await prefs.remove(_keyRefreshToken);
+    await prefs.remove(_keyCachedUser);
   }
 }

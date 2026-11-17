@@ -485,10 +485,24 @@ class _OCRScreenState extends State<OCRScreen> {
     final isTablet = screenSize.width > 600;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Procesamiento OCR'),
+        title: const Text(
+          'Procesamiento OCR',
+          style: TextStyle(
+            color: Color(0xFF0F172A),
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+        ),
       ),
-      backgroundColor: const Color(0xFFF5F5F5),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(isTablet ? 24.0 : 16.0),
         child: ConstrainedBox(

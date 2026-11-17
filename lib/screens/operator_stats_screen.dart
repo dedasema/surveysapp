@@ -6,9 +6,9 @@ import 'sync_queue_screen.dart';
 import 'package:intl/intl.dart';
 
 class OperatorStatsScreen extends StatefulWidget {
-  final User user;
+  final User? user;
 
-  const OperatorStatsScreen({super.key, required this.user});
+  const OperatorStatsScreen({super.key, this.user});
 
   @override
   State<OperatorStatsScreen> createState() => _OperatorStatsScreenState();
@@ -45,10 +45,23 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
     final todayStr = DateFormat('EEEE, d MMMM', 'es').format(DateTime.now());
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Métricas del Operador'),
-        backgroundColor: const Color(0xFF1565C0),
-        foregroundColor: Colors.white,
+        title: const Text(
+          'Métricas del Operador',
+          style: TextStyle(
+            color: Color(0xFF0F172A),
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF0F172A)),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -112,7 +125,7 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
               radius: 30,
               backgroundColor: Colors.white.withOpacity(0.2),
               child: Text(
-                widget.user.nombre.isNotEmpty ? widget.user.nombre[0].toUpperCase() : 'O',
+                widget.user?.nombre.isNotEmpty == true ? widget.user!.nombre[0].toUpperCase() : 'O',
                 style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
@@ -122,7 +135,7 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.user.nombre,
+                    widget.user?.nombre.isNotEmpty == true ? widget.user!.nombre : 'Operador de Campo',
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   const SizedBox(height: 4),
