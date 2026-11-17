@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/campaign_models.dart';
 import 'package:http_parser/http_parser.dart';
+import 'app_config_service.dart';
+import 'notification_service.dart';
 
 class AudioService {
   static const String baseUrl = 'https://surveys-backend-83d9.onrender.com';
@@ -129,8 +131,10 @@ class AudioService {
     String? taskId,
     void Function(String status)? onStatusChange,
     Duration timeout = const Duration(seconds: 60),
-    Duration pollInterval = const Duration(seconds: 2),
+    Duration? pollInterval,
   }) async {
+    final effectiveInterval =
+        pollInterval ?? AppConfigService.instance.pollingInterval;
     final startTime = DateTime.now();
 
     while (DateTime.now().difference(startTime) < timeout) {
@@ -145,15 +149,36 @@ class AudioService {
             statusResp.status == 'completed' ||
             statusResp.status == 'completado' ||
             (statusResp.respuestas.isNotEmpty || statusResp.transcripcion.isNotEmpty)) {
+          // Disparar notificación local nativa de éxito
+          final previewText = statusResp.transcripcion.isNotEmpty
+              ? (statusResp.transcripcion.length > 50
+                  ? '${statusResp.transcripcion.substring(0, 50)}...'
+                  : statusResp.transcripcion)
+              : null;
+          await NotificationService.instance.notifyAudioTranscription(
+            entregaId: entregaId,
+            isSuccess: true,
+            details: previewText != null ? 'Transcripción: "$previewText"' : null,
+          );
           return statusResp;
         } else if (statusResp.status == 'error' || statusResp.status == 'failed') {
+          await NotificationService.instance.notifyAudioTranscription(
+            entregaId: entregaId,
+            isSuccess: false,
+            details: 'El procesamiento de audio falló en el servidor.',
+          );
           throw Exception('El procesamiento de audio falló en el servidor.');
         }
       }
 
-      await Future.delayed(pollInterval);
+      await Future.delayed(effectiveInterval);
     }
 
+    await NotificationService.instance.notifyAudioTranscription(
+      entregaId: entregaId,
+      isSuccess: false,
+      details: 'Tiempo de espera agotado al transcribir el audio.',
+    );
     throw Exception('Tiempo de espera agotado esperando la transcripción de audio.');
   }
 }

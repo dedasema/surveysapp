@@ -7,7 +7,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:surveysapp/main.dart';
+import 'package:surveys_app/main.dart';
 
 void main() {
   testWidgets('SurveysApp initial load smoke test', (WidgetTester tester) async {

@@ -8,6 +8,8 @@ import 'operator_stats_screen.dart';
 import 'sync_queue_screen.dart';
 import 'login_screen.dart';
 import '../services/offline_sync_service.dart';
+import '../services/app_config_service.dart';
+import '../services/notification_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -45,6 +47,117 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _showDemoSettingsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final config = AppConfigService.instance;
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.tune, color: Color(0xFF1565C0)),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Ajustes de Presentación y Alertas',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    secondary: Icon(
+                      Icons.bolt,
+                      color: config.isDemoMode ? Colors.orange : Colors.grey,
+                    ),
+                    title: const Text('Modo Presentación / Demo (1s)',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(
+                      config.isDemoMode
+                          ? 'Sondeo ultrarrápido activo (1 seg) para respuesta instantánea.'
+                          : 'Sondeo normal (30 seg) para ahorro de batería.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: config.isDemoMode ? Colors.orange[800] : Colors.grey[600],
+                      ),
+                    ),
+                    value: config.isDemoMode,
+                    activeColor: Colors.orange,
+                    onChanged: (val) async {
+                      await config.setDemoMode(val);
+                      setModalState(() {});
+                      setState(() {});
+                      if (val) {
+                        await NotificationService.instance.showTestNotification(isDemo: true);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    secondary: Icon(
+                      Icons.notifications_active,
+                      color: config.isNotificationsEnabled
+                          ? const Color(0xFF1565C0)
+                          : Colors.grey,
+                    ),
+                    title: const Text('Notificaciones Locales Nativas',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: const Text(
+                      'Alertas en la barra de Android al completar transcripción o sincronización.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    value: config.isNotificationsEnabled,
+                    activeColor: const Color(0xFF1565C0),
+                    onChanged: (val) async {
+                      await config.setNotificationsEnabled(val);
+                      setModalState(() {});
+                      setState(() {});
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.notifications_none),
+                      label: const Text('Probar Notificación Nativa'),
+                      onPressed: () async {
+                        await NotificationService.instance.showTestNotification(isDemo: false);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Notificación de prueba enviada a la barra de Android'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -78,6 +191,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               );
             },
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.tune,
+              color: AppConfigService.instance.isDemoMode
+                  ? Colors.amberAccent
+                  : Colors.white,
+            ),
+            tooltip: 'Ajustes y Modo Demo',
+            onPressed: () => _showDemoSettingsSheet(context),
           ),
           IconButton(
             icon: const Icon(Icons.person),
@@ -182,6 +305,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
+              ),
+              AnimatedBuilder(
+                animation: AppConfigService.instance,
+                builder: (context, _) {
+                  if (!AppConfigService.instance.isDemoMode) {
+                    return const SizedBox.shrink();
+                  }
+                  return Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.amber[100],
+                      border: Border.all(color: Colors.amber[800]!),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.bolt, color: Colors.amber[900], size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Modo Demo Activo (Sondeo rápido 1s)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Colors.amber[900],
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => _showDemoSettingsSheet(context),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(50, 30),
+                          ),
+                          child: const Text('Ajustes',
+                              style: TextStyle(fontSize: 12)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 24),
               const Text(

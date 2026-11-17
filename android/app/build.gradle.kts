@@ -24,7 +24,7 @@ android {
         applicationId = "com.example.surveysapp"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23                              // ← CAMBIA ESTO
+        minSdk = flutter.minSdkVersion                              // ← CAMBIA ESTO
         targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName

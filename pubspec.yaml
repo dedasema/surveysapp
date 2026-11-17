@@ -29,6 +29,7 @@ dependencies:
   http_parser: ^4.0.2
   sqflite: ^2.3.0
   connectivity_plus: ^5.0.2
+  flutter_local_notifications: ^23.0.2
 
 
 dev_dependencies:

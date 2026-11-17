@@ -7,6 +7,7 @@ import '../models/sync_queue_model.dart';
 import 'database_helper.dart';
 import 'audio_service.dart';
 import 'ocr_service.dart';
+import 'notification_service.dart';
 
 class OfflineSyncService {
   static final OfflineSyncService instance = OfflineSyncService._init();
@@ -107,11 +108,26 @@ class OfflineSyncService {
     if (!await isOnline()) return;
 
     _isSyncing = true;
+    int successCount = 0;
+    int errorCount = 0;
+
     try {
       final pendingItems = await _db.getPendingItems();
 
       for (final item in pendingItems) {
-        await _processItem(item);
+        final success = await _processItem(item);
+        if (success) {
+          successCount++;
+        } else {
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0 || errorCount > 0) {
+        await NotificationService.instance.notifyOfflineSync(
+          syncedCount: successCount,
+          failedCount: errorCount,
+        );
       }
     } finally {
       _isSyncing = false;
