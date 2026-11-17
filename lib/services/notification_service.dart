@@ -36,7 +36,7 @@ class NotificationService {
     );
 
     await _flutterLocalNotificationsPlugin.initialize(
-      settings: initializationSettings,
+      initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         if (kDebugMode) {
           print('Notificación tocada con payload: ${response.payload}');
@@ -120,10 +120,10 @@ class NotificationService {
     );
 
     await _flutterLocalNotificationsPlugin.show(
-      id: id,
-      title: title,
-      body: body,
-      notificationDetails: notificationDetails,
+      id,
+      title,
+      body,
+      notificationDetails,
       payload: payload,
     );
   }
