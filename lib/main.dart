@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'services/auth_service.dart';
@@ -8,6 +9,9 @@ import 'services/app_config_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await initializeDateFormatting('es', null);
+  } catch (_) {}
   await AppConfigService.instance.init();
   await NotificationService.instance.init();
   runApp(const SurveysApp());

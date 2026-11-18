@@ -42,13 +42,28 @@ class AudioSurvey {
     this.respondidoEn,
   });
 
-  factory AudioSurvey.fromJson(Map<String, dynamic> json) => AudioSurvey(
-    id           : json['id']            as String,
-    plantilla    : SurveyTemplate.fromJson(json['plantilla']),
-    destinatario : json['destinatario']  as String?,
-    creadoEn     : json['creado_en']     as String?,
-    respondidoEn : json['respondido_en'] as String?,
-  );
+  factory AudioSurvey.fromJson(Map<String, dynamic> json) {
+    final plantillaRaw = json['plantilla'];
+    final plantilla = plantillaRaw is Map<String, dynamic>
+        ? SurveyTemplate.fromJson(plantillaRaw)
+        : SurveyTemplate(id: (json['id'] ?? '').toString(), nombre: 'Encuesta', preguntas: []);
+
+    String? destinatario;
+    final destRaw = json['destinatario'];
+    if (destRaw is String) {
+      destinatario = destRaw;
+    } else if (destRaw is Map<String, dynamic>) {
+      destinatario = (destRaw['nombre'] ?? destRaw['email'] ?? destRaw['telefono'])?.toString();
+    }
+
+    return AudioSurvey(
+      id: (json['id'] ?? '').toString(),
+      plantilla: plantilla,
+      destinatario: destinatario,
+      creadoEn: (json['creado_en'] ?? json['enviado_en'])?.toString(),
+      respondidoEn: json['respondido_en']?.toString(),
+    );
+  }
 }
 
 class SurveyTemplate {
@@ -65,11 +80,11 @@ class SurveyTemplate {
   });
 
   factory SurveyTemplate.fromJson(Map<String, dynamic> json) => SurveyTemplate(
-    id          : json['id']       as String,
-    nombre      : json['nombre']   as String,
-    descripcion : json['descripcion'] as String?,   // ←
-    preguntas   : (json['preguntas'] as List)
-        .map((q) => Question.fromJson(q))
+    id          : (json['id'] ?? '').toString(),
+    nombre      : (json['nombre'] ?? 'Plantilla').toString(),
+    descripcion : json['descripcion'] as String?,
+    preguntas   : (json['preguntas'] as List? ?? [])
+        .map((q) => Question.fromJson(q as Map<String, dynamic>))
         .toList(),
   );
 }
@@ -93,13 +108,13 @@ class Question {
 
   factory Question.fromJson(Map<String, dynamic> json) {
     return Question(
-      id: json['id'],
-      orden: json['orden'],
-      texto: json['texto'],
-      tipoPreguntaId: json['tipo_pregunta_id'],
-      obligatorio: json['obligatorio'],
-      opciones: (json['opciones'] as List)
-          .map((o) => QuestionOption.fromJson(o))
+      id: (json['id'] ?? '').toString(),
+      orden: (json['orden'] as num?)?.toInt() ?? 1,
+      texto: (json['texto'] ?? '').toString(),
+      tipoPreguntaId: (json['tipo_pregunta_id'] ?? json['tipo_id'] as num?)?.toInt() ?? 1,
+      obligatorio: json['obligatorio'] == true,
+      opciones: (json['opciones'] as List? ?? [])
+          .map((o) => QuestionOption.fromJson(o as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -117,7 +132,7 @@ class QuestionOption {
   });
 
   factory QuestionOption.fromJson(Map<String, dynamic> json) => QuestionOption(
-    id    : json['id']    as String,
+    id    : (json['id'] ?? '').toString(),
     texto : json['texto'] as String?,
     valor : json['valor']?.toString(),               // cast seguro
   );
@@ -155,17 +170,18 @@ class AudioTranscriptionResponse {
       parsedRespuestas = json['respuestas_preguntas'] as List<dynamic>;
     }
 
-    final rawStatus = (json['status'] ?? json['estado'] ?? 'ok').toString();
-    final taskId = (json['task_id'] ?? json['job_id'])?.toString();
+    final rawStatus = (json['status'] ?? json['estado'] ?? json['estado_transcripcion'] ?? 'ok').toString();
+    final taskId = (json['task_id'] ?? json['job_id'] ?? json['id'])?.toString();
     final isAsync = (taskId != null && taskId.isNotEmpty) ||
         rawStatus == 'queued' ||
         rawStatus == 'processing' ||
         rawStatus == 'transcribing' ||
-        rawStatus == 'pending';
+        rawStatus == 'pending' ||
+        rawStatus == 'pendiente';
 
     return AudioTranscriptionResponse(
       entregaId: (json['entrega_id'] ?? '').toString(),
-      transcripcion: (json['transcripcion'] ?? '').toString(),
+      transcripcion: (json['transcripcion'] ?? json['transcripcion_texto'] ?? json['texto_transcrito'] ?? '').toString(),
       respuestas: parsedRespuestas,
       payloadEnviado: json['payload_enviado'] is Map<String, dynamic>
           ? json['payload_enviado'] as Map<String, dynamic>

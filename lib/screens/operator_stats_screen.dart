@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/auth_models.dart';
 import '../services/database_helper.dart';
-import '../services/offline_sync_service.dart';
 import 'sync_queue_screen.dart';
-import 'package:intl/intl.dart';
 
 class OperatorStatsScreen extends StatefulWidget {
   final User? user;
@@ -31,18 +29,56 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
   }
 
   Future<void> _loadStats() async {
-    final counts = await DatabaseHelper.instance.getQueueCounts();
-    if (mounted) {
-      setState(() {
-        _queueCounts = counts;
-        _isLoading = false;
-      });
+    try {
+      final counts = await DatabaseHelper.instance.getQueueCounts();
+      if (mounted) {
+        setState(() {
+          _queueCounts = counts;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Aviso cargando métricas locales: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  String _formatTodayDate(DateTime date) {
+    const days = [
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo'
+    ];
+    const months = [
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre'
+    ];
+    final dayName = days[(date.weekday - 1).clamp(0, 6)];
+    final monthName = months[(date.month - 1).clamp(0, 11)];
+    return '$dayName, ${date.day} de $monthName';
   }
 
   @override
   Widget build(BuildContext context) {
-    final todayStr = DateFormat('EEEE, d MMMM', 'es').format(DateTime.now());
+    final todayStr = _formatTodayDate(DateTime.now());
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -53,6 +89,7 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
             color: Color(0xFF0F172A),
             fontWeight: FontWeight.w700,
             fontSize: 18,
+            letterSpacing: -0.3,
           ),
         ),
         backgroundColor: Colors.white,
@@ -65,7 +102,11 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _loadStats,
+            tooltip: 'Actualizar métricas',
+            onPressed: () {
+              setState(() => _isLoading = true);
+              _loadStats();
+            },
           ),
         ],
       ),
@@ -75,28 +116,39 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
               onRefresh: _loadStats,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Tarjeta de resumen de operador
+                    // Tarjeta moderna del Operador
                     _buildOperatorHeader(todayStr),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
 
-                    // KPIs del Operador
-                    const Text(
-                      'Actividad y Rendimiento',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    // Título de Sección
+                    const Row(
+                      children: [
+                        Text(
+                          'Actividad y Rendimiento',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
+
+                    // Cuadrícula de KPIs
                     _buildKPIGrid(),
                     const SizedBox(height: 20),
 
-                    // Banner de Estado Offline
+                    // Banner de Estado de Sincronización
                     _buildSyncStatusCard(),
                     const SizedBox(height: 20),
 
-                    // Consejos para trabajo de campo
+                    // Buenas prácticas de campo
                     _buildFieldTipsCard(),
                   ],
                 ),
@@ -106,48 +158,103 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
   }
 
   Widget _buildOperatorHeader(String todayStr) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1565C0), Color(0xFF0D47A1)],
+    final userName = (widget.user?.nombre.trim().isNotEmpty == true)
+        ? widget.user!.nombre.trim()
+        : 'Operador de Campo';
+    final userInitial = userName.isNotEmpty ? userName[0].toUpperCase() : 'O';
+    final role = (widget.user?.rol.isNotEmpty == true) ? widget.user!.rol.toUpperCase() : 'OPERADOR';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withOpacity(0.08),
+            offset: const Offset(0, 8),
+            blurRadius: 20,
           ),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.white.withOpacity(0.2),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Center(
               child: Text(
-                widget.user?.nombre.isNotEmpty == true ? widget.user!.nombre[0].toUpperCase() : 'O',
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
+                userInitial,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.user?.nombre.isNotEmpty == true ? widget.user!.nombre : 'Operador de Campo',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  userName,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: -0.2,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Operador de Campo • $todayStr',
-                    style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.8)),
-                  ),
-                ],
-              ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(
+                        role,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        todayStr,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.7),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -164,35 +271,39 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
-      childAspectRatio: 1.3,
+      childAspectRatio: 1.25,
       children: [
         _buildKPICard(
           title: 'Sincronizadas Hoy',
           value: '$todaySynced',
           subtitle: 'Completadas en el día',
-          icon: Icons.today,
-          color: Colors.green,
+          icon: Icons.check_circle_outline,
+          accentColor: const Color(0xFF16A34A),
+          bgColor: const Color(0xFFF0FDF4),
         ),
         _buildKPICard(
           title: 'Pendientes Offline',
           value: '$pending',
           subtitle: 'En cola local',
-          icon: Icons.cloud_queue,
-          color: Colors.orange,
+          icon: Icons.cloud_upload_outlined,
+          accentColor: const Color(0xFFD97706),
+          bgColor: const Color(0xFFFFFBEB),
         ),
         _buildKPICard(
           title: 'Total Acumulado',
           value: '$totalSynced',
           subtitle: 'Histórico local',
-          icon: Icons.task_alt,
-          color: const Color(0xFF1565C0),
+          icon: Icons.inventory_2_outlined,
+          accentColor: const Color(0xFF2563EB),
+          bgColor: const Color(0xFFEFF6FF),
         ),
         _buildKPICard(
           title: 'Requieren Atención',
           value: '$failed',
           subtitle: 'Errores de subida',
           icon: Icons.error_outline,
-          color: failed > 0 ? Colors.red : Colors.grey,
+          accentColor: failed > 0 ? const Color(0xFFDC2626) : const Color(0xFF94A3B8),
+          bgColor: failed > 0 ? const Color(0xFFFEF2F2) : const Color(0xFFF8FAFC),
         ),
       ],
     );
@@ -203,37 +314,72 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
     required String value,
     required String subtitle,
     required IconData icon,
-    required Color color,
+    required Color accentColor,
+    required Color bgColor,
   }) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(14.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withOpacity(0.03),
+            offset: const Offset(0, 2),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
                   title,
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF475569),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                Icon(icon, color: color, size: 20),
-              ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: accentColor, size: 16),
+              ),
+            ],
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: accentColor,
+              letterSpacing: -0.5,
             ),
-            Text(
-              value,
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: color),
+          ),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Color(0xFF94A3B8),
+              fontWeight: FontWeight.w500,
             ),
-            Text(
-              subtitle,
-              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
-            ),
-          ],
-        ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -243,73 +389,114 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
     final failed = _queueCounts['failed'] ?? 0;
     final hasPending = pending > 0 || failed > 0;
 
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: (hasPending ? Colors.orange : Colors.green).withOpacity(0.1),
-            shape: BoxShape.circle,
+    return InkWell(
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SyncQueueScreen()),
+        );
+        _loadStats();
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: hasPending ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
           ),
-          child: Icon(
-            hasPending ? Icons.sync : Icons.cloud_done,
-            color: hasPending ? Colors.orange : Colors.green,
-            size: 28,
-          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withOpacity(0.03),
+              offset: const Offset(0, 2),
+              blurRadius: 8,
+            ),
+          ],
         ),
-        title: Text(
-          hasPending ? 'Cola de Sincronización ($pending pendientes)' : 'Sincronización al Día',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: hasPending ? const Color(0xFFFFFBEB) : const Color(0xFFF0FDF4),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                hasPending ? Icons.sync : Icons.cloud_done_outlined,
+                color: hasPending ? const Color(0xFFD97706) : const Color(0xFF16A34A),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    hasPending
+                        ? 'Cola de Sincronización ($pending pendientes)'
+                        : 'Sincronización al Día',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    hasPending
+                        ? 'Toca para revisar y gestionar los envíos pendientes.'
+                        : 'Todas las encuestas locales han sido enviadas al servidor.',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF94A3B8)),
+          ],
         ),
-        subtitle: Text(
-          hasPending
-              ? 'Toca para revisar y gestionar los envíos pendientes.'
-              : 'Todas las encuestas locales han sido enviadas al servidor.',
-          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const SyncQueueScreen()),
-          );
-          _loadStats();
-        },
       ),
     );
   }
 
   Widget _buildFieldTipsCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: const Color(0xFFF9FBE7),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.lightbulb_outline, color: Color(0xFF827717), size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'Buenas Prácticas en Campo',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF827717)),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.lightbulb_outline, color: Color(0xFF475569), size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Buenas Prácticas en Campo',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: Color(0xFF0F172A),
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '• Si no tienes cobertura, sigue encuestando con normalidad. La app guardará todas las grabaciones y fotos localmente en SQLite.\n'
+            '• Al regresar a una zona con WiFi o 4G, la sincronización en segundo plano enviará todo automáticamente sin pérdida de datos.',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF475569),
+              height: 1.5,
             ),
-            const SizedBox(height: 10),
-            Text(
-              '• Si no tienes cobertura, sigue encuestando con normalidad. La app guardará todas las grabaciones y fotos localmente.\n'
-              '• Al regresar a una zona con WiFi o 4G, la sincronización se activará automáticamente sin perder datos.',
-              style: TextStyle(fontSize: 12, color: Colors.grey[800], height: 1.4),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

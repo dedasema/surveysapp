@@ -38,82 +38,235 @@ class AudioService {
   }
 
   Future<List<AudioSurvey>> getAudioSurveys(String campaignId) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/public/entregas/audio?campana_id=$campaignId'),
-      headers: {
-        'accept': 'application/json',
-      },
-    );
+    // 1. Intentar obtener el detalle completo autenticado de la campaña
+    try {
+      final response = await _authService.authenticatedGet(
+        Uri.parse('$baseUrl/campanas/$campaignId/full-detail'),
+      );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((survey) => AudioSurvey.fromJson(survey)).toList();
-    } else {
-      throw Exception('Failed to load audio surveys: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final plantillaJson = data['plantilla'] as Map<String, dynamic>?;
+        final plantilla = plantillaJson != null
+            ? SurveyTemplate.fromJson(plantillaJson)
+            : SurveyTemplate(
+                id: campaignId,
+                nombre: (data['nombre'] ?? 'Encuesta de Audio').toString(),
+                preguntas: [],
+              );
+
+        final List<dynamic> entregasList = data['entregas'] as List<dynamic>? ?? [];
+
+        if (entregasList.isNotEmpty) {
+          return entregasList.map((entrega) {
+            final dest = entrega['destinatario'];
+            String? destinatarioNombre;
+            if (dest is Map<String, dynamic>) {
+              destinatarioNombre = dest['nombre'] ?? dest['email'] ?? dest['telefono'];
+            } else if (dest is String) {
+              destinatarioNombre = dest;
+            }
+            return AudioSurvey(
+              id: (entrega['id'] ?? '').toString(),
+              plantilla: plantilla,
+              destinatario: destinatarioNombre,
+              creadoEn: (entrega['enviado_en'] ?? data['creado_en'])?.toString(),
+              respondidoEn: entrega['respondido_en']?.toString(),
+            );
+          }).toList();
+        }
+
+        // Si la campaña no tiene entregas creadas todavía, creamos una entrega de audio automáticamente
+        try {
+          final canalId = data['canal_id'] ?? 5;
+          final createResp = await _authService.authenticatedPost(
+            Uri.parse('$baseUrl/campanas/$campaignId/entregas'),
+            body: json.encode({'canal_id': canalId}),
+          );
+          if (createResp.statusCode == 200 || createResp.statusCode == 201) {
+            final newEntrega = json.decode(createResp.body);
+            return [
+              AudioSurvey(
+                id: (newEntrega['id'] ?? '').toString(),
+                plantilla: plantilla,
+                destinatario: 'Nueva Encuesta',
+                creadoEn: DateTime.now().toIso8601String(),
+              )
+            ];
+          }
+        } catch (e) {
+          print('Aviso creando entrega automática: $e');
+        }
+
+        // Fallback: retornar una entrada con el ID de campaña
+        return [
+          AudioSurvey(
+            id: campaignId,
+            plantilla: plantilla,
+            destinatario: 'Operador de Campo',
+            creadoEn: DateTime.now().toIso8601String(),
+          )
+        ];
+      }
+    } catch (e) {
+      print('Aviso: Falló /campanas/$campaignId/full-detail: $e');
     }
+
+    // 2. Fallback: listar entregas directamente desde /campanas/{id}/entregas
+    try {
+      final response = await _authService.authenticatedGet(
+        Uri.parse('$baseUrl/campanas/$campaignId/entregas'),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        final defaultTemplate = SurveyTemplate(
+          id: campaignId,
+          nombre: 'Encuesta de Audio',
+          preguntas: [],
+        );
+        return data.map((entrega) {
+          final dest = entrega['destinatario'];
+          String? destinatarioNombre;
+          if (dest is Map<String, dynamic>) {
+            destinatarioNombre = dest['nombre'] ?? dest['email'];
+          }
+          return AudioSurvey(
+            id: (entrega['id'] ?? '').toString(),
+            plantilla: defaultTemplate,
+            destinatario: destinatarioNombre,
+            creadoEn: (entrega['enviado_en'] ?? entrega['creado_en'])?.toString(),
+            respondidoEn: entrega['respondido_en']?.toString(),
+          );
+        }).toList();
+      }
+    } catch (e) {
+      print('Aviso: Falló fallback /campanas/$campaignId/entregas: $e');
+    }
+
+    // 3. Fallback legado si existiera /public/entregas/audio
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/public/entregas/audio?campana_id=$campaignId'),
+        headers: {'accept': 'application/json'},
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((survey) => AudioSurvey.fromJson(survey)).toList();
+      }
+    } catch (_) {}
+
+    throw Exception('No se pudieron obtener las encuestas para esta campaña');
   }
 
   Future<AudioTranscriptionResponse> transcribeAudio(String entregaId, File audioFile) async {
+    final token = await _getToken();
+    final fileName = '$entregaId.wav';
+    final bytes = await audioFile.readAsBytes();
+
+    // 1. Probar primero el endpoint oficial RF18: POST /encuestas/{entrega_id}/audio-respuesta
+    try {
+      final uri = Uri.parse('$baseUrl/encuestas/$entregaId/audio-respuesta');
+      final request = http.MultipartRequest('POST', uri);
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      request.headers['accept'] = 'application/json';
+
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'archivo',
+          bytes,
+          filename: fileName,
+          contentType: MediaType('audio', 'wav'),
+        ),
+      );
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 202) {
+        final data = json.decode(response.body);
+        return AudioTranscriptionResponse.fromJson(data);
+      }
+    } catch (e) {
+      print('Aviso en /encuestas/$entregaId/audio-respuesta: $e');
+    }
+
+    // 2. Fallback: Probar ruta legacy POST /public/entregas/{entrega_id}/audio
     try {
       final uri = Uri.parse('$baseUrl/public/entregas/$entregaId/audio');
       final request = http.MultipartRequest('POST', uri);
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      request.headers['accept'] = 'application/json';
 
-      request.headers.addAll({
-        'accept': 'application/json',
-      });
-
-      // Crear el archivo con el nombre de la entrega_id y especificar el tipo MIME correcto
-      final fileName = '$entregaId.wav';
-
-      // Leer los bytes del archivo
-      final bytes = await audioFile.readAsBytes();
-
-      // Crear el MultipartFile con el tipo de contenido específico
       request.files.add(
         http.MultipartFile.fromBytes(
           'file',
           bytes,
           filename: fileName,
-          contentType: MediaType('audio', 'wav'), // Especificar tipo MIME correcto
+          contentType: MediaType('audio', 'wav'),
         ),
       );
-
-      print('Enviando audio para transcripción...');
-      print('Archivo: $fileName');
-      print('Tamaño: ${bytes.length} bytes');
-      print('Content-Type: audio/wav');
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      print('Respuesta STT: ${response.statusCode}');
-      print('Cuerpo: ${response.body}');
-
-      if (response.statusCode == 200 || response.statusCode == 202) {
+      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 202) {
         final data = json.decode(response.body);
         return AudioTranscriptionResponse.fromJson(data);
       } else {
         throw Exception('Error en transcripción: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      print('Error en transcribeAudio: $e');
       throw Exception('Error al transcribir audio: $e');
     }
   }
 
   Future<AudioTranscriptionResponse?> checkAudioStatus(String entregaId, {String? taskId}) async {
     try {
-      final endpoint = taskId != null && taskId.isNotEmpty
-          ? '$baseUrl/tasks/$taskId'
-          : '$baseUrl/public/entregas/$entregaId/audio/status';
+      final token = await _getToken();
+      final headers = {
+        'accept': 'application/json',
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+      };
 
-      final response = await http.get(
-        Uri.parse(endpoint),
-        headers: {'accept': 'application/json'},
+      // 1. Probar endpoint RF18
+      final audioId = taskId ?? entregaId;
+      try {
+        final resp = await http.get(
+          Uri.parse('$baseUrl/encuestas/audio-respuesta/$audioId/estado'),
+          headers: headers,
+        );
+        if (resp.statusCode == 200) {
+          final data = json.decode(resp.body);
+          return AudioTranscriptionResponse.fromJson(data);
+        }
+      } catch (_) {}
+
+      // 2. Probar task worker
+      if (taskId != null && taskId.isNotEmpty) {
+        try {
+          final resp = await http.get(
+            Uri.parse('$baseUrl/tasks/$taskId'),
+            headers: headers,
+          );
+          if (resp.statusCode == 200) {
+            final data = json.decode(resp.body);
+            return AudioTranscriptionResponse.fromJson(data);
+          }
+        } catch (_) {}
+      }
+
+      // 3. Fallback legado
+      final legacyResp = await http.get(
+        Uri.parse('$baseUrl/public/entregas/$entregaId/audio/status'),
+        headers: headers,
       );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+      if (legacyResp.statusCode == 200) {
+        final data = json.decode(legacyResp.body);
         return AudioTranscriptionResponse.fromJson(data);
       }
       return null;
