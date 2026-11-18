@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart' as path;
+import '../config/api_config.dart';
 
 class OCRService {
-  static const String baseUrl = 'https://surveys-backend-83d9.onrender.com';
+  static String get baseUrl => ApiConfig.baseUrl;
 
   Future<Map<String, dynamic>?> processImage(File imageFile, {String? entregaId}) async {
     try {

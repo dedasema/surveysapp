@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/api_config.dart';
 
 class AppConfigService extends ChangeNotifier {
   static final AppConfigService instance = AppConfigService._init();
 
   static const String _keyDemoMode = 'config_demo_mode_enabled';
   static const String _keyNotifications = 'config_notifications_enabled';
+  static const String _keyApiBaseUrl = 'config_api_base_url';
 
   bool _isDemoMode = false;
   bool _isNotificationsEnabled = true;
@@ -16,6 +18,7 @@ class AppConfigService extends ChangeNotifier {
   bool get isDemoMode => _isDemoMode;
   bool get isNotificationsEnabled => _isNotificationsEnabled;
   bool get isInitialized => _isInitialized;
+  String get baseUrl => ApiConfig.baseUrl;
 
   /// Retorna el intervalo de sondeo (polling).
   /// En modo Demo: 1 segundo para visualización instantánea.
@@ -29,6 +32,14 @@ class AppConfigService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _isDemoMode = prefs.getBool(_keyDemoMode) ?? false;
     _isNotificationsEnabled = prefs.getBool(_keyNotifications) ?? true;
+
+    final storedUrl = prefs.getString(_keyApiBaseUrl);
+    if (storedUrl != null && storedUrl.trim().isNotEmpty) {
+      ApiConfig.setBaseUrl(storedUrl.trim());
+    } else {
+      ApiConfig.setBaseUrl(ApiConfig.defaultBaseUrl);
+    }
+
     _isInitialized = true;
     notifyListeners();
   }
@@ -44,6 +55,13 @@ class AppConfigService extends ChangeNotifier {
     _isNotificationsEnabled = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyNotifications, value);
+    notifyListeners();
+  }
+
+  Future<void> setBaseUrl(String url) async {
+    ApiConfig.setBaseUrl(url);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyApiBaseUrl, ApiConfig.baseUrl);
     notifyListeners();
   }
 }

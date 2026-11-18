@@ -150,6 +150,13 @@ class ProfileScreen extends StatelessWidget {
                         ? const Color(0xFF16A34A)
                         : const Color(0xFFDC2626),
                   ),
+                  const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
+                  _buildProfileRow(
+                    icon: Icons.cloud_outlined,
+                    label: 'Servidor Backend',
+                    value: AppConfigService.instance.baseUrl,
+                    valueColor: const Color(0xFF2563EB),
+                  ),
                 ],
               ),
             ),

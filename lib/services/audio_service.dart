@@ -3,13 +3,14 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/campaign_models.dart';
+import '../config/api_config.dart';
 import 'package:http_parser/http_parser.dart';
 import 'app_config_service.dart';
 import 'notification_service.dart';
 import 'auth_service.dart';
 
 class AudioService {
-  static const String baseUrl = 'https://surveys-backend-83d9.onrender.com';
+  static String get baseUrl => ApiConfig.baseUrl;
   final AuthService _authService = AuthService();
 
   Future<String?> _getToken() async {
