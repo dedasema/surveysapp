@@ -47,7 +47,7 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
   void initState() {
     super.initState();
     _initializeAnimations();
-    _requestPermissions();
+    _ensureMicrophonePermission();
     _setupAudioPlayer();
   }
 
@@ -99,23 +99,44 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
     });
   }
 
-  Future<void> _requestPermissions() async {
-    await Permission.microphone.request();
-    await Permission.storage.request();
+  Future<bool> _ensureMicrophonePermission() async {
+    var status = await Permission.microphone.status;
+    if (status.isGranted) return true;
+
+    status = await Permission.microphone.request();
+    if (status.isGranted) return true;
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Permiso de Micrófono Requerido'),
+          content: const Text(
+            'Para registrar las respuestas por voz en terreno, SurveysApp necesita acceso al micrófono.\n\nPuedes habilitarlo en los ajustes de tu teléfono.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                openAppSettings();
+              },
+              child: const Text('Abrir Ajustes'),
+            ),
+          ],
+        ),
+      );
+    }
+    return false;
   }
 
   Future<void> _startRecording() async {
     try {
-      final hasPermission = await Permission.microphone.isGranted;
-      if (!hasPermission) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Se requiere permiso de micrófono'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
+      final hasPermission = await _ensureMicrophonePermission();
+      if (!hasPermission) return;
 
       final directory = await getApplicationDocumentsDirectory();
       final fileName = '${widget.survey.id}.wav';

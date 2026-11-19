@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../services/ocr_service.dart';
 import '../services/offline_sync_service.dart';
 import '../models/campaign_models.dart';
@@ -20,7 +21,46 @@ class _OCRScreenState extends State<OCRScreen> {
   final ImagePicker _picker = ImagePicker();
   final OCRService _ocrService = OCRService();
 
+  Future<bool> _ensureCameraPermission() async {
+    var status = await Permission.camera.status;
+    if (status.isGranted) return true;
+
+    status = await Permission.camera.request();
+    if (status.isGranted) return true;
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Permiso de Cámara Requerido'),
+          content: const Text(
+            'Para digitalizar formularios físicos mediante OCR, la aplicación necesita acceso a la cámara.\n\nPuedes habilitarlo en los ajustes de la aplicación.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                openAppSettings();
+              },
+              child: const Text('Abrir Ajustes'),
+            ),
+          ],
+        ),
+      );
+    }
+    return false;
+  }
+
   Future<void> _pickImage(ImageSource source) async {
+    if (source == ImageSource.camera) {
+      final hasPermission = await _ensureCameraPermission();
+      if (!hasPermission) return;
+    }
+
     try {
       final XFile? image = await _picker.pickImage(
         source: source,
