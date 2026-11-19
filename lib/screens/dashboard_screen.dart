@@ -566,6 +566,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
 
+              // Indicador de Respuestas Pendientes y Alerta de Sincronización (A4)
+              StreamBuilder<Map<String, int>>(
+                stream: OfflineSyncService.instance.countsStream,
+                builder: (context, snapshot) {
+                  final counts = snapshot.data ?? {};
+                  final pending = (counts['pending'] ?? 0) + (counts['failed'] ?? 0);
+                  return FutureBuilder<bool>(
+                    future: OfflineSyncService.instance.hasPendingOlderThan7Days(),
+                    builder: (context, olderSnap) {
+                      final hasOlder = olderSnap.data == true;
+                      return _buildSyncCard(context, pending, hasOlder);
+                    },
+                  );
+                },
+              ),
+
               // Banner Modo Demo
               AnimatedBuilder(
                 animation: AppConfigService.instance,
@@ -779,6 +795,91 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSyncCard(BuildContext context, int pending, bool hasOlder) {
+    return Container(
+      margin: const EdgeInsets.only(top: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: hasOlder
+            ? const Color(0xFFFEF2F2)
+            : (pending > 0 ? const Color(0xFFEFF6FF) : Colors.white),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: hasOlder
+              ? const Color(0xFFFCA5A5)
+              : (pending > 0 ? const Color(0xFFBFDBFE) : const Color(0xFFE2E8F0)),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (hasOlder) ...[
+            const Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '¡Atención! Hay respuestas pendientes de más de 7 días sin sincronizar.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFB91C1C),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
+          Row(
+            children: [
+              Icon(
+                pending > 0 ? Icons.cloud_upload_outlined : Icons.cloud_done_outlined,
+                color: hasOlder
+                    ? const Color(0xFFDC2626)
+                    : (pending > 0 ? const Color(0xFF2563EB) : const Color(0xFF16A34A)),
+                size: 22,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  pending > 0
+                      ? '$pending respuestas pendientes de sincronizar'
+                      : 'Todas las respuestas están sincronizadas',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: hasOlder
+                        ? const Color(0xFF991B1B)
+                        : (pending > 0 ? const Color(0xFF1E40AF) : const Color(0xFF15803D)),
+                  ),
+                ),
+              ),
+              if (pending > 0)
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: const Icon(Icons.sync, size: 16),
+                  label: const Text('Sincronizar ahora', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  onPressed: () async {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Iniciando sincronización por lotes...')),
+                    );
+                    await OfflineSyncService.instance.syncPendingQueue();
+                  },
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
