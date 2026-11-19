@@ -390,24 +390,19 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
     required String subtitle,
     required String state, // 'waiting', 'active', 'done', 'error'
   }) {
-    Color iconColor;
     Widget leadingWidget;
 
     if (state == 'done') {
-      iconColor = Colors.green;
       leadingWidget = const Icon(Icons.check_circle, color: Colors.green, size: 22);
     } else if (state == 'active') {
-      iconColor = const Color(0xFF1565C0);
       leadingWidget = const SizedBox(
         width: 20,
         height: 20,
         child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1565C0)),
       );
     } else if (state == 'error') {
-      iconColor = Colors.red;
       leadingWidget = const Icon(Icons.error, color: Colors.red, size: 22);
     } else {
-      iconColor = Colors.grey;
       leadingWidget = const Icon(Icons.radio_button_unchecked, color: Colors.grey, size: 22);
     }
 
