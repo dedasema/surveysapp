@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/auth_models.dart';
 import '../services/auth_service.dart';
 import '../config/api_config.dart';
+import '../services/version_check_service.dart';
 import 'profile_screen.dart';
 import 'ocr_screen.dart';
 import 'audio_campaigns_screen.dart';
@@ -29,6 +30,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _loadUserData();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final update = await VersionCheckService.instance.checkForUpdate();
+      if (update != null && mounted) {
+        VersionCheckService.instance.showUpdateDialog(context, update);
+      }
+    });
     _sessionSub = AuthService.instance.sessionExpiredStream.listen((expired) {
       if (expired && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
