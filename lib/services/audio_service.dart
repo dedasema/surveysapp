@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/campaign_models.dart';
@@ -8,6 +9,7 @@ import 'package:http_parser/http_parser.dart';
 import 'app_config_service.dart';
 import 'notification_service.dart';
 import 'auth_service.dart';
+import 'database_helper.dart';
 
 class AudioService {
   static String get baseUrl => ApiConfig.baseUrl;
@@ -21,21 +23,37 @@ class AudioService {
   }
 
   Future<List<Campaign>> getAudioCampaigns() async {
-    final response = await _authService.authenticatedGet(
-      Uri.parse('$baseUrl/campanas'),
-    );
+    try {
+      final response = await _authService.authenticatedGet(
+        Uri.parse('$baseUrl/campanas'),
+      );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      // Filtrar solo las campañas de audio (canal_id = 5) o todas si no tienen canal especificado
-      final audioCampaigns = data
-          .where((campaign) => campaign['canal_id'] == 5 || campaign['canal_id'] == null)
-          .map((campaign) => Campaign.fromJson(campaign))
-          .toList();
-      return audioCampaigns;
-    } else {
-      throw Exception('Error al cargar campañas: ${response.statusCode} - ${response.body}');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        final audioCampaigns = data
+            .where((campaign) => campaign['canal_id'] == 5 || campaign['canal_id'] == null)
+            .map((campaign) => Campaign.fromJson(campaign))
+            .toList();
+
+        // Guardado local en SQLite para soporte de Modo Avión
+        try {
+          await DatabaseHelper.instance.cacheCampaigns(audioCampaigns);
+        } catch (e) {
+          debugPrint('Error guardando campañas en caché local: $e');
+        }
+        return audioCampaigns;
+      }
+    } catch (e) {
+      debugPrint('Aviso obteniendo campañas por red (posible modo avión): $e');
     }
+
+    // Fallback: Recuperar campañas guardadas localmente en SQLite
+    final cached = await DatabaseHelper.instance.getCachedCampaigns();
+    if (cached.isNotEmpty) {
+      return cached;
+    }
+
+    throw Exception('Sin conexión y no hay campañas guardadas localmente.');
   }
 
   Future<List<AudioSurvey>> getAudioSurveys(String campaignId) async {
@@ -58,8 +76,9 @@ class AudioService {
 
         final List<dynamic> entregasList = data['entregas'] as List<dynamic>? ?? [];
 
+        List<AudioSurvey> surveys = [];
         if (entregasList.isNotEmpty) {
-          return entregasList.map((entrega) {
+          surveys = entregasList.map((entrega) {
             final dest = entrega['destinatario'];
             String? destinatarioNombre;
             if (dest is Map<String, dynamic>) {
@@ -75,42 +94,51 @@ class AudioService {
               respondidoEn: entrega['respondido_en']?.toString(),
             );
           }).toList();
-        }
+        } else {
+          // Si la campaña no tiene entregas creadas todavía, creamos una entrega de audio automáticamente
+          try {
+            final canalId = data['canal_id'] ?? 5;
+            final createResp = await _authService.authenticatedPost(
+              Uri.parse('$baseUrl/campanas/$campaignId/entregas'),
+              body: json.encode({'canal_id': canalId}),
+            );
+            if (createResp.statusCode == 200 || createResp.statusCode == 201) {
+              final newEntrega = json.decode(createResp.body);
+              surveys = [
+                AudioSurvey(
+                  id: (newEntrega['id'] ?? '').toString(),
+                  plantilla: plantilla,
+                  destinatario: 'Nueva Encuesta',
+                  creadoEn: DateTime.now().toIso8601String(),
+                )
+              ];
+            }
+          } catch (e) {
+            debugPrint('Aviso creando entrega automática: $e');
+          }
 
-        // Si la campaña no tiene entregas creadas todavía, creamos una entrega de audio automáticamente
-        try {
-          final canalId = data['canal_id'] ?? 5;
-          final createResp = await _authService.authenticatedPost(
-            Uri.parse('$baseUrl/campanas/$campaignId/entregas'),
-            body: json.encode({'canal_id': canalId}),
-          );
-          if (createResp.statusCode == 200 || createResp.statusCode == 201) {
-            final newEntrega = json.decode(createResp.body);
-            return [
+          if (surveys.isEmpty) {
+            surveys = [
               AudioSurvey(
-                id: (newEntrega['id'] ?? '').toString(),
+                id: campaignId,
                 plantilla: plantilla,
-                destinatario: 'Nueva Encuesta',
+                destinatario: 'Operador de Campo',
                 creadoEn: DateTime.now().toIso8601String(),
               )
             ];
           }
-        } catch (e) {
-          print('Aviso creando entrega automática: $e');
         }
 
-        // Fallback: retornar una entrada con el ID de campaña
-        return [
-          AudioSurvey(
-            id: campaignId,
-            plantilla: plantilla,
-            destinatario: 'Operador de Campo',
-            creadoEn: DateTime.now().toIso8601String(),
-          )
-        ];
+        // Guardado local en SQLite para soporte de Modo Avión
+        try {
+          await DatabaseHelper.instance.cacheSurveys(campaignId, surveys);
+        } catch (e) {
+          debugPrint('Error guardando encuestas en caché SQLite: $e');
+        }
+        return surveys;
       }
     } catch (e) {
-      print('Aviso: Falló /campanas/$campaignId/full-detail: $e');
+      debugPrint('Aviso: Falló /campanas/$campaignId/full-detail: $e');
     }
 
     // 2. Fallback: listar entregas directamente desde /campanas/{id}/entregas
@@ -126,7 +154,7 @@ class AudioService {
           nombre: 'Encuesta de Audio',
           preguntas: [],
         );
-        return data.map((entrega) {
+        final surveys = data.map((entrega) {
           final dest = entrega['destinatario'];
           String? destinatarioNombre;
           if (dest is Map<String, dynamic>) {
@@ -140,24 +168,23 @@ class AudioService {
             respondidoEn: entrega['respondido_en']?.toString(),
           );
         }).toList();
+
+        try {
+          await DatabaseHelper.instance.cacheSurveys(campaignId, surveys);
+        } catch (_) {}
+        return surveys;
       }
     } catch (e) {
-      print('Aviso: Falló fallback /campanas/$campaignId/entregas: $e');
+      debugPrint('Aviso: Falló fallback /campanas/$campaignId/entregas: $e');
     }
 
-    // 3. Fallback legado si existiera /public/entregas/audio
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/public/entregas/audio?campana_id=$campaignId'),
-        headers: {'accept': 'application/json'},
-      );
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((survey) => AudioSurvey.fromJson(survey)).toList();
-      }
-    } catch (_) {}
+    // 3. Fallback definitivo en Modo Avión: Recuperar encuestas cacheadas en SQLite
+    final localCached = await DatabaseHelper.instance.getCachedSurveys(campaignId);
+    if (localCached.isNotEmpty) {
+      return localCached;
+    }
 
-    throw Exception('No se pudieron obtener las encuestas para esta campaña');
+    throw Exception('Sin conexión y no hay encuestas descargadas localmente para esta campaña.');
   }
 
   Future<AudioTranscriptionResponse> transcribeAudio(String entregaId, File audioFile) async {

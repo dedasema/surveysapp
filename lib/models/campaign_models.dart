@@ -1,15 +1,19 @@
 // lib/models/campaign_models.dart
+
+/// Modelo representativo de Campaña con serialización JSON bidireccional (fromJson / toJson)
 class Campaign {
   final String id;
   final String nombre;
+  final String? descripcion;
   final int canalId;
   final int estadoId;
-  final String? programadaEn;   // ← nullable
-  final String? creadoEn;       // ← nullable
+  final String? programadaEn;
+  final String? creadoEn;
 
   Campaign({
     required this.id,
     required this.nombre,
+    this.descripcion,
     required this.canalId,
     required this.estadoId,
     this.programadaEn,
@@ -17,13 +21,24 @@ class Campaign {
   });
 
   factory Campaign.fromJson(Map<String, dynamic> json) => Campaign(
-    id          : json['id']        as String,
-    nombre      : json['nombre']    as String,
-    canalId     : json['canal_id']  as int,
-    estadoId    : json['estado_id'] as int,
-    programadaEn: json['programada_en'] as String?,   // ← cast opcional
-    creadoEn    : json['creado_en']     as String?,
+    id: (json['id'] ?? '').toString(),
+    nombre: (json['nombre'] ?? '').toString(),
+    descripcion: json['descripcion'] as String?,
+    canalId: (json['canal_id'] as num?)?.toInt() ?? 5,
+    estadoId: (json['estado_id'] as num?)?.toInt() ?? 2,
+    programadaEn: json['programada_en'] as String?,
+    creadoEn: json['creado_en'] as String?,
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'nombre': nombre,
+    'descripcion': descripcion,
+    'canal_id': canalId,
+    'estado_id': estadoId,
+    'programada_en': programadaEn,
+    'creado_en': creadoEn,
+  };
 }
 
 
