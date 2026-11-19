@@ -34,7 +34,8 @@ class OfflineSyncService {
   }
 
   void _initConnectivityListener() {
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((result) {
+    _connectivitySubscription =
+        _connectivity.onConnectivityChanged.listen((result) {
       if (result != ConnectivityResult.none) {
         // Conexión restablecida: dispara sincronización automática por lotes
         syncPendingQueue();
@@ -203,12 +204,18 @@ class OfflineSyncService {
 
       // Caso 1: Respuestas estructuradas JSON validadas por el operador
       if (item.payloadJson != null && item.payloadJson!.isNotEmpty) {
-        final uri = Uri.parse('$baseUrl/public/entregas/${item.entregaId}/respuestas');
-        final response = await http.post(
-          uri,
-          headers: {'Content-Type': 'application/json', 'accept': 'application/json'},
-          body: item.payloadJson,
-        ).timeout(const Duration(seconds: 15));
+        final uri =
+            Uri.parse('$baseUrl/public/entregas/${item.entregaId}/respuestas');
+        final response = await http
+            .post(
+              uri,
+              headers: {
+                'Content-Type': 'application/json',
+                'accept': 'application/json'
+              },
+              body: item.payloadJson,
+            )
+            .timeout(const Duration(seconds: 15));
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           await _markItemSuccess(item);
@@ -216,11 +223,13 @@ class OfflineSyncService {
         } else if (response.statusCode == 400 &&
             response.body.toLowerCase().contains('ya ha sido respondida')) {
           // Idempotencia: el servidor ya guardó esta respuesta previamente
-          debugPrint('Idempotencia detectada para ${item.entregaId}: ya respondida en el backend.');
+          debugPrint(
+              'Idempotencia detectada para ${item.entregaId}: ya respondida en el backend.');
           await _markItemSuccess(item);
           return true;
         } else {
-          throw Exception('Backend HTTP ${response.statusCode}: ${response.body}');
+          throw Exception(
+              'Backend HTTP ${response.statusCode}: ${response.body}');
         }
       }
 
@@ -228,7 +237,8 @@ class OfflineSyncService {
       if (item.canalId == 5 && item.filePath != null) {
         final file = File(item.filePath!);
         if (!await file.exists()) {
-          throw Exception('Archivo de audio local no encontrado: ${item.filePath}');
+          throw Exception(
+              'Archivo de audio local no encontrado: ${item.filePath}');
         }
 
         final audioService = AudioService();
@@ -241,11 +251,13 @@ class OfflineSyncService {
       if (item.canalId == 4 && item.filePath != null) {
         final file = File(item.filePath!);
         if (!await file.exists()) {
-          throw Exception('Archivo de imagen local no encontrado: ${item.filePath}');
+          throw Exception(
+              'Archivo de imagen local no encontrado: ${item.filePath}');
         }
 
         final ocrService = OCRService();
-        final result = await ocrService.processImage(file, entregaId: item.entregaId);
+        final result =
+            await ocrService.processImage(file, entregaId: item.entregaId);
         if (result != null) {
           await _markItemSuccess(item);
           return true;
@@ -288,7 +300,8 @@ class OfflineSyncService {
 
   Future<void> retryItem(int id) async {
     final items = await _db.getAllQueueItems();
-    final item = items.firstWhere((i) => i.id == id, orElse: () => throw Exception('Item no encontrado'));
+    final item = items.firstWhere((i) => i.id == id,
+        orElse: () => throw Exception('Item no encontrado'));
     await _processItem(item);
     await refreshCounts();
   }

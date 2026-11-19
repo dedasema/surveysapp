@@ -113,7 +113,8 @@ class _OCRScreenState extends State<OCRScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Error al procesar la imagen con OCR en el servidor.'),
+            content:
+                Text('Error al procesar la imagen con OCR en el servidor.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -154,7 +155,8 @@ class _OCRScreenState extends State<OCRScreen> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
-              final entregaId = 'offline_ocr_${DateTime.now().millisecondsSinceEpoch}';
+              final entregaId =
+                  'offline_ocr_${DateTime.now().millisecondsSinceEpoch}';
               await OfflineSyncService.instance.enqueueOCRSurvey(
                 entregaId: entregaId,
                 filePath: _selectedImage!.path,
@@ -162,7 +164,8 @@ class _OCRScreenState extends State<OCRScreen> {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Formulario encolado para sincronización offline.'),
+                    content: Text(
+                        'Formulario encolado para sincronización offline.'),
                     backgroundColor: Colors.orange,
                   ),
                 );
@@ -378,12 +381,12 @@ class _OCRScreenState extends State<OCRScreen> {
                 ),
               ),
               SizedBox(height: isTablet ? 12 : 8),
-
               if (result['plantilla_usada']['preguntas'] != null)
                 ...List.generate(
                   result['plantilla_usada']['preguntas'].length,
-                      (index) {
-                    final pregunta = result['plantilla_usada']['preguntas'][index];
+                  (index) {
+                    final pregunta =
+                        result['plantilla_usada']['preguntas'][index];
                     return Container(
                       margin: EdgeInsets.only(bottom: isTablet ? 8.0 : 6.0),
                       padding: EdgeInsets.all(isTablet ? 12.0 : 10.0),
@@ -406,10 +409,11 @@ class _OCRScreenState extends State<OCRScreen> {
                             SizedBox(height: isTablet ? 6 : 4),
                             ...List.generate(
                               pregunta['opciones'].length,
-                                  (optIndex) {
+                              (optIndex) {
                                 final opcion = pregunta['opciones'][optIndex];
                                 return Padding(
-                                  padding: EdgeInsets.only(left: isTablet ? 16.0 : 12.0),
+                                  padding: EdgeInsets.only(
+                                      left: isTablet ? 16.0 : 12.0),
                                   child: Text(
                                     '• ${opcion['texto']}',
                                     style: TextStyle(
@@ -429,13 +433,15 @@ class _OCRScreenState extends State<OCRScreen> {
             ],
 
             // Botón para revisar y validar en formulario interactivo
-            if (result['plantilla_usada'] != null && result['entrega_id'] != null) ...[
+            if (result['plantilla_usada'] != null &&
+                result['entrega_id'] != null) ...[
               SizedBox(height: isTablet ? 20 : 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    final plantilla = SurveyTemplate.fromJson(result['plantilla_usada']);
+                    final plantilla =
+                        SurveyTemplate.fromJson(result['plantilla_usada']);
                     List<dynamic> respuestas = [];
                     if (result['respuestas'] is List) {
                       respuestas = result['respuestas'];
@@ -627,13 +633,14 @@ class _OCRScreenState extends State<OCRScreen> {
                     ),
                     icon: _isProcessing
                         ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
                         : const Icon(Icons.analytics),
                     label: Text(
                       _isProcessing ? 'Procesando...' : 'Procesar con OCR',

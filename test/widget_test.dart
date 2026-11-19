@@ -10,7 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:surveys_app/main.dart';
 
 void main() {
-  testWidgets('SurveysApp initial load smoke test', (WidgetTester tester) async {
+  testWidgets('SurveysApp initial load smoke test',
+      (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const SurveysApp());
     expect(find.byType(SurveysApp), findsOneWidget);

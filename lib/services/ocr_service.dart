@@ -1,14 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart' as path;
 import '../config/api_config.dart';
 
+/// Servicio de reconocimiento óptico de caracteres (OCR) para digitalización de formularios físicos
 class OCRService {
   static String get baseUrl => ApiConfig.baseUrl;
 
-  Future<Map<String, dynamic>?> processImage(File imageFile, {String? entregaId}) async {
+  /// Procesa una fotografía de formulario en papel enviándola al backend para lectura OCR
+  Future<Map<String, dynamic>?> processImage(File imageFile,
+      {String? entregaId}) async {
     try {
       final uri = Uri.parse('$baseUrl/public/entregas/ocr');
       var request = http.MultipartRequest('POST', uri);
@@ -17,67 +21,51 @@ class OCRService {
         request.fields['entrega_id'] = entregaId;
       }
 
-      // Headers
-      request.headers['accept'] = 'application/json';
+      request.headers.addAll({
+        'accept': 'application/json',
+      });
 
-      // Obtener la extensión del archivo
-      String fileName = path.basename(imageFile.path);
-      String fileExtension = path.extension(fileName).toLowerCase();
-
-      // Determinar el tipo MIME correcto
+      final extension = path.extension(imageFile.path).toLowerCase();
       String mimeType;
-      switch (fileExtension) {
-        case '.png':
-          mimeType = 'image/png';
-          break;
+      switch (extension) {
         case '.jpg':
         case '.jpeg':
           mimeType = 'image/jpeg';
           break;
-        case '.gif':
-          mimeType = 'image/gif';
+        case '.png':
+          mimeType = 'image/png';
           break;
-        case '.bmp':
-          mimeType = 'image/bmp';
-          break;
-        case '.webp':
-          mimeType = 'image/webp';
+        case '.pdf':
+          mimeType = 'application/pdf';
           break;
         default:
-          mimeType = 'image/jpeg'; // Por defecto
+          mimeType = 'application/octet-stream';
       }
 
-      // Crear el archivo multipart con el tipo MIME correcto
+      final fileName = path.basename(imageFile.path);
       var multipartFile = await http.MultipartFile.fromPath(
         'file',
         imageFile.path,
         filename: fileName,
-        // Especificar el tipo de contenido
         contentType: MediaType.parse(mimeType),
       );
 
       request.files.add(multipartFile);
 
-      print('Enviando archivo: $fileName');
-      print('Tipo MIME: $mimeType');
-      print('Tamaño: ${await imageFile.length()} bytes');
+      debugPrint('Enviando imagen para OCR: $fileName ($mimeType)');
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
-      print('Código de respuesta: ${response.statusCode}');
-      print('Respuesta: ${response.body}');
-
       if (response.statusCode == 200) {
-        // Parsear la respuesta JSON
         final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
         return jsonResponse;
       } else {
-        print('Error en OCR: ${response.statusCode} - ${response.body}');
+        debugPrint('Error en OCR: ${response.statusCode} - ${response.body}');
         return null;
       }
     } catch (e) {
-      print('Error procesando imagen: $e');
+      debugPrint('Error procesando imagen con OCR: $e');
       return null;
     }
   }

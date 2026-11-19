@@ -50,7 +50,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Error al iniciar sesión. Verifica tus credenciales.'),
+            content:
+                Text('Error al iniciar sesión. Verifica tus credenciales.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -162,19 +163,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: _isLoading ? null : _login,
                             child: _isLoading
                                 ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
                                 : const Text(
-                              'Iniciar Sesión',
-                              style: TextStyle(fontSize: 16),
-                            ),
+                                    'Iniciar Sesión',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
                           ),
                         ),
                       ],

@@ -77,7 +77,9 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al reintentar: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Error al reintentar: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -145,30 +147,34 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
                     },
                   ),
                 ),
-      bottomNavigationBar: _items.any((i) => i.status == 'pending' || i.status == 'failed')
-          ? Container(
-              padding: const EdgeInsets.all(16),
-              color: Colors.white,
-              child: SizedBox(
-                height: 48,
-                child: ElevatedButton.icon(
-                  onPressed: _isSyncing ? null : _triggerSyncAll,
-                  icon: _isSyncing
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.sync),
-                  label: Text(_isSyncing ? 'Sincronizando...' : 'Sincronizar Todo Ahora'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1565C0),
-                    foregroundColor: Colors.white,
+      bottomNavigationBar:
+          _items.any((i) => i.status == 'pending' || i.status == 'failed')
+              ? Container(
+                  padding: const EdgeInsets.all(16),
+                  color: Colors.white,
+                  child: SizedBox(
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: _isSyncing ? null : _triggerSyncAll,
+                      icon: _isSyncing
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.sync),
+                      label: Text(_isSyncing
+                          ? 'Sincronizando...'
+                          : 'Sincronizar Todo Ahora'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1565C0),
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            )
-          : null,
+                )
+              : null,
     );
   }
 
@@ -211,12 +217,17 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: (isAudio ? const Color(0xFFE91E63) : const Color(0xFF1565C0)).withOpacity(0.1),
+                    color: (isAudio
+                            ? const Color(0xFFE91E63)
+                            : const Color(0xFF1565C0))
+                        .withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     isAudio ? Icons.mic : Icons.document_scanner,
-                    color: isAudio ? const Color(0xFFE91E63) : const Color(0xFF1565C0),
+                    color: isAudio
+                        ? const Color(0xFFE91E63)
+                        : const Color(0xFF1565C0),
                     size: 24,
                   ),
                 ),
@@ -227,7 +238,8 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
                     children: [
                       Text(
                         item.campaignName ?? item.canalLabel,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -240,14 +252,18 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     _getStatusText(item.status),
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: statusColor),
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor),
                   ),
                 ),
               ],
@@ -289,8 +305,10 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
                 children: [
                   TextButton.icon(
                     onPressed: () => _deleteItem(item.id!),
-                    icon: const Icon(Icons.delete, size: 16, color: Colors.grey),
-                    label: const Text('Eliminar', style: TextStyle(color: Colors.grey)),
+                    icon:
+                        const Icon(Icons.delete, size: 16, color: Colors.grey),
+                    label: const Text('Eliminar',
+                        style: TextStyle(color: Colors.grey)),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
@@ -300,7 +318,8 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1565C0),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                     ),
                   ),
                 ],

@@ -4,7 +4,8 @@ import 'package:surveys_app/screens/operator_stats_screen.dart';
 import 'package:surveys_app/models/auth_models.dart';
 
 void main() {
-  testWidgets('OperatorStatsScreen renders without locale exception', (tester) async {
+  testWidgets('OperatorStatsScreen renders without locale exception',
+      (tester) async {
     final testUser = User(
       id: 'test-id',
       email: 'test@example.com',

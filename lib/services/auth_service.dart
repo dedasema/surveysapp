@@ -69,9 +69,11 @@ class AuthService {
         final loginResponse = LoginResponse.fromJson(jsonDecode(response.body));
 
         // Guardado seguro exclusivo (nunca en SharedPreferences en texto plano)
-        await _storage.write(key: _keyAccessToken, value: loginResponse.accessToken);
+        await _storage.write(
+            key: _keyAccessToken, value: loginResponse.accessToken);
         if (loginResponse.refreshToken != null) {
-          await _storage.write(key: _keyRefreshToken, value: loginResponse.refreshToken);
+          await _storage.write(
+              key: _keyRefreshToken, value: loginResponse.refreshToken);
         }
 
         // Limpieza de tokens residuales en texto plano si existían de versiones anteriores
@@ -123,18 +125,22 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        final refreshData = TokenRefreshResponse.fromJson(jsonDecode(response.body));
+        final refreshData =
+            TokenRefreshResponse.fromJson(jsonDecode(response.body));
 
         // Guardar nuevo par de tokens rotados
-        await _storage.write(key: _keyAccessToken, value: refreshData.accessToken);
+        await _storage.write(
+            key: _keyAccessToken, value: refreshData.accessToken);
         if (refreshData.refreshToken != null) {
-          await _storage.write(key: _keyRefreshToken, value: refreshData.refreshToken);
+          await _storage.write(
+              key: _keyRefreshToken, value: refreshData.refreshToken);
         }
         return true;
       }
 
       // Si el servidor responde 401/403 o no puede renovar, el refresh token es inválido
-      debugPrint('Refresco de token rechazado por el servidor (${response.statusCode}): ${response.body}');
+      debugPrint(
+          'Refresco de token rechazado por el servidor (${response.statusCode}): ${response.body}');
       await _handleExpiredSession();
       return false;
     } catch (e) {
@@ -157,7 +163,8 @@ class AuthService {
   }
 
   /// Realiza un GET autenticado con reintento automático tras refresco rotativo si recibe 401
-  Future<http.Response> authenticatedGet(Uri uri, {Map<String, String>? headers}) async {
+  Future<http.Response> authenticatedGet(Uri uri,
+      {Map<String, String>? headers}) async {
     String? token = await getAccessToken();
     final combinedHeaders = {
       'accept': 'application/json',
@@ -180,7 +187,8 @@ class AuthService {
   }
 
   /// Realiza un POST autenticado con reintento automático tras refresco rotativo si recibe 401
-  Future<http.Response> authenticatedPost(Uri uri, {Map<String, String>? headers, Object? body}) async {
+  Future<http.Response> authenticatedPost(Uri uri,
+      {Map<String, String>? headers, Object? body}) async {
     String? token = await getAccessToken();
     final combinedHeaders = {
       'accept': 'application/json',
@@ -216,7 +224,8 @@ class AuthService {
         return user;
       }
     } catch (e) {
-      debugPrint('Aviso obteniendo usuario del servidor (posible modo offline): $e');
+      debugPrint(
+          'Aviso obteniendo usuario del servidor (posible modo offline): $e');
     }
 
     // Fallback 1: Recuperar perfil de caché local
@@ -251,11 +260,13 @@ class AuthService {
     try {
       final refreshTokenValue = await getRefreshToken();
       if (refreshTokenValue != null) {
-        await http.post(
-          Uri.parse('$baseUrl/auth/logout'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'refresh_token': refreshTokenValue}),
-        ).timeout(const Duration(seconds: 3));
+        await http
+            .post(
+              Uri.parse('$baseUrl/auth/logout'),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({'refresh_token': refreshTokenValue}),
+            )
+            .timeout(const Duration(seconds: 3));
       }
     } catch (_) {}
 

@@ -91,11 +91,14 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     String nombre = 'Operador';
-    if (json['nombre_completo'] != null && json['nombre_completo'].toString().trim().isNotEmpty) {
+    if (json['nombre_completo'] != null &&
+        json['nombre_completo'].toString().trim().isNotEmpty) {
       nombre = json['nombre_completo'].toString();
-    } else if (json['nombre'] != null && json['nombre'].toString().trim().isNotEmpty) {
+    } else if (json['nombre'] != null &&
+        json['nombre'].toString().trim().isNotEmpty) {
       nombre = json['nombre'].toString();
-    } else if (json['email'] != null && json['email'].toString().contains('@')) {
+    } else if (json['email'] != null &&
+        json['email'].toString().contains('@')) {
       nombre = json['email'].toString().split('@')[0];
     }
 
@@ -108,7 +111,8 @@ class User {
 
     DateTime creadoEn = DateTime.now();
     if (json['creado_en'] != null) {
-      creadoEn = DateTime.tryParse(json['creado_en'].toString()) ?? DateTime.now();
+      creadoEn =
+          DateTime.tryParse(json['creado_en'].toString()) ?? DateTime.now();
     }
 
     return User(

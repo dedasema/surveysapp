@@ -7,7 +7,8 @@ class SyncQueueItem {
   final String? campaignName;
   final int canalId; // 4 = Papel/OCR, 5 = Audio
   final String? filePath;
-  final String? payloadJson; // JSON serializado de respuestas si ya fueron editadas/extraídas
+  final String?
+      payloadJson; // JSON serializado de respuestas si ya fueron editadas/extraídas
   final String status; // 'pending', 'syncing', 'failed', 'synced'
   final String? errorMessage;
   final DateTime createdAt;
@@ -58,7 +59,9 @@ class SyncQueueItem {
       status: map['status'] as String? ?? 'pending',
       errorMessage: map['error_message'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
-      syncedAt: map['synced_at'] != null ? DateTime.parse(map['synced_at'] as String) : null,
+      syncedAt: map['synced_at'] != null
+          ? DateTime.parse(map['synced_at'] as String)
+          : null,
       retryCount: map['retry_count'] as int? ?? 0,
     );
   }

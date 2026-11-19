@@ -116,7 +116,8 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
               onRefresh: _loadStats,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -162,7 +163,9 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
         ? widget.user!.nombre.trim()
         : 'Operador de Campo';
     final userInitial = userName.isNotEmpty ? userName[0].toUpperCase() : 'O';
-    final role = (widget.user?.rol.isNotEmpty == true) ? widget.user!.rol.toUpperCase() : 'OPERADOR';
+    final role = (widget.user?.rol.isNotEmpty == true)
+        ? widget.user!.rol.toUpperCase()
+        : 'OPERADOR';
 
     return Container(
       width: double.infinity,
@@ -222,7 +225,8 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(5),
@@ -302,8 +306,10 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
           value: '$failed',
           subtitle: 'Errores de subida',
           icon: Icons.error_outline,
-          accentColor: failed > 0 ? const Color(0xFFDC2626) : const Color(0xFF94A3B8),
-          bgColor: failed > 0 ? const Color(0xFFFEF2F2) : const Color(0xFFF8FAFC),
+          accentColor:
+              failed > 0 ? const Color(0xFFDC2626) : const Color(0xFF94A3B8),
+          bgColor:
+              failed > 0 ? const Color(0xFFFEF2F2) : const Color(0xFFF8FAFC),
         ),
       ],
     );
@@ -404,7 +410,8 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: hasPending ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
+            color:
+                hasPending ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
           ),
           boxShadow: [
             BoxShadow(
@@ -419,12 +426,16 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: hasPending ? const Color(0xFFFFFBEB) : const Color(0xFFF0FDF4),
+                color: hasPending
+                    ? const Color(0xFFFFFBEB)
+                    : const Color(0xFFF0FDF4),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 hasPending ? Icons.sync : Icons.cloud_done_outlined,
-                color: hasPending ? const Color(0xFFD97706) : const Color(0xFF16A34A),
+                color: hasPending
+                    ? const Color(0xFFD97706)
+                    : const Color(0xFF16A34A),
                 size: 24,
               ),
             ),
@@ -448,12 +459,14 @@ class _OperatorStatsScreenState extends State<OperatorStatsScreen> {
                     hasPending
                         ? 'Toca para revisar y gestionar los envíos pendientes.'
                         : 'Todas las encuestas locales han sido enviadas al servidor.',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    style:
+                        const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF94A3B8)),
+            const Icon(Icons.arrow_forward_ios,
+                size: 14, color: Color(0xFF94A3B8)),
           ],
         ),
       ),

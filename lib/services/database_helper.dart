@@ -175,24 +175,29 @@ class DatabaseHelper {
   Future<Map<String, int>> getQueueCounts() async {
     final db = await database;
     final pendingCount = Sqflite.firstIntValue(await db.rawQuery(
-      "SELECT COUNT(*) FROM sync_queue WHERE status IN ('pending', 'syncing')",
-    )) ?? 0;
+          "SELECT COUNT(*) FROM sync_queue WHERE status IN ('pending', 'syncing')",
+        )) ??
+        0;
 
     final failedCount = Sqflite.firstIntValue(await db.rawQuery(
-      "SELECT COUNT(*) FROM sync_queue WHERE status = 'failed'",
-    )) ?? 0;
+          "SELECT COUNT(*) FROM sync_queue WHERE status = 'failed'",
+        )) ??
+        0;
 
     final syncedCount = Sqflite.firstIntValue(await db.rawQuery(
-      "SELECT COUNT(*) FROM sync_queue WHERE status = 'synced'",
-    )) ?? 0;
+          "SELECT COUNT(*) FROM sync_queue WHERE status = 'synced'",
+        )) ??
+        0;
 
     final todaySyncedCount = Sqflite.firstIntValue(await db.rawQuery(
-      "SELECT COUNT(*) FROM sync_queue WHERE status = 'synced' AND date(synced_at) = date('now')",
-    )) ?? 0;
+          "SELECT COUNT(*) FROM sync_queue WHERE status = 'synced' AND date(synced_at) = date('now')",
+        )) ??
+        0;
 
     final totalCount = Sqflite.firstIntValue(await db.rawQuery(
-      "SELECT COUNT(*) FROM sync_queue",
-    )) ?? 0;
+          "SELECT COUNT(*) FROM sync_queue",
+        )) ??
+        0;
 
     return {
       'pending': pendingCount,
@@ -300,7 +305,8 @@ class DatabaseHelper {
       final db = await database;
       final maps = await db.query('cached_campaigns', orderBy: 'nombre ASC');
       return maps.map((m) {
-        final data = jsonDecode(m['data_json'] as String) as Map<String, dynamic>;
+        final data =
+            jsonDecode(m['data_json'] as String) as Map<String, dynamic>;
         return Campaign.fromJson(data);
       }).toList();
     } catch (e) {
@@ -309,7 +315,8 @@ class DatabaseHelper {
     }
   }
 
-  Future<void> cacheSurveys(String campaignId, List<AudioSurvey> surveys) async {
+  Future<void> cacheSurveys(
+      String campaignId, List<AudioSurvey> surveys) async {
     final db = await database;
     final batch = db.batch();
     final now = DateTime.now().toIso8601String();
@@ -329,18 +336,22 @@ class DatabaseHelper {
               'id': s.plantilla.id,
               'nombre': s.plantilla.nombre,
               'descripcion': s.plantilla.descripcion,
-              'preguntas': s.plantilla.preguntas.map((q) => {
-                'id': q.id,
-                'orden': q.orden,
-                'texto': q.texto,
-                'tipo_pregunta_id': q.tipoPreguntaId,
-                'obligatorio': q.obligatorio,
-                'opciones': q.opciones.map((o) => {
-                  'id': o.id,
-                  'texto': o.texto,
-                  'valor': o.valor,
-                }).toList(),
-              }).toList(),
+              'preguntas': s.plantilla.preguntas
+                  .map((q) => {
+                        'id': q.id,
+                        'orden': q.orden,
+                        'texto': q.texto,
+                        'tipo_pregunta_id': q.tipoPreguntaId,
+                        'obligatorio': q.obligatorio,
+                        'opciones': q.opciones
+                            .map((o) => {
+                                  'id': o.id,
+                                  'texto': o.texto,
+                                  'valor': o.valor,
+                                })
+                            .toList(),
+                      })
+                  .toList(),
             },
           }),
           'updated_at': now,
@@ -361,7 +372,8 @@ class DatabaseHelper {
       );
 
       return maps.map((m) {
-        final data = jsonDecode(m['data_json'] as String) as Map<String, dynamic>;
+        final data =
+            jsonDecode(m['data_json'] as String) as Map<String, dynamic>;
         return AudioSurvey.fromJson(data);
       }).toList();
     } catch (e) {

@@ -40,7 +40,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (expired && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Tu sesión ha expirado. Por favor ingresa nuevamente.'),
+            content:
+                Text('Tu sesión ha expirado. Por favor ingresa nuevamente.'),
             backgroundColor: Color(0xFFDC2626),
           ),
         );
@@ -116,7 +117,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           color: const Color(0xFFEFF6FF),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.tune, color: Color(0xFF2563EB), size: 20),
+                        child: const Icon(Icons.tune,
+                            color: Color(0xFF2563EB), size: 20),
                       ),
                       const SizedBox(width: 12),
                       const Text(
@@ -129,7 +131,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.close, size: 20, color: Color(0xFF64748B)),
+                        icon: const Icon(Icons.close,
+                            size: 20, color: Color(0xFF64748B)),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -144,7 +147,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       children: [
                         SwitchListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 4),
                           secondary: Icon(
                             Icons.bolt,
                             color: config.isDemoMode
@@ -182,9 +186,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             }
                           },
                         ),
-                        const Divider(height: 1, indent: 48, color: Color(0xFFE2E8F0)),
+                        const Divider(
+                            height: 1, indent: 48, color: Color(0xFFE2E8F0)),
                         SwitchListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 4),
                           secondary: Icon(
                             Icons.notifications_active_outlined,
                             color: config.isNotificationsEnabled
@@ -201,7 +207,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           subtitle: const Text(
                             'Alertas en la barra de Android al transcribir o sincronizar.',
-                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            style: TextStyle(
+                                fontSize: 12, color: Color(0xFF64748B)),
                           ),
                           value: config.isNotificationsEnabled,
                           activeColor: const Color(0xFF2563EB),
@@ -227,7 +234,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         const Row(
                           children: [
-                            Icon(Icons.dns_outlined, size: 18, color: Color(0xFF2563EB)),
+                            Icon(Icons.dns_outlined,
+                                size: 18, color: Color(0xFF2563EB)),
                             SizedBox(width: 8),
                             Text(
                               'Servidor Backend (URL Base)',
@@ -254,17 +262,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Expanded(
                               child: OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
                                 onPressed: () {
-                                  final controller = TextEditingController(text: config.baseUrl);
+                                  final controller = TextEditingController(
+                                      text: config.baseUrl);
                                   showDialog(
                                     context: context,
                                     builder: (dlgContext) => AlertDialog(
-                                      title: const Text('Cambiar URL del Backend'),
+                                      title:
+                                          const Text('Cambiar URL del Backend'),
                                       content: TextField(
                                         controller: controller,
                                         decoration: const InputDecoration(
@@ -274,7 +285,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.pop(dlgContext),
+                                          onPressed: () =>
+                                              Navigator.pop(dlgContext),
                                           child: const Text('Cancelar'),
                                         ),
                                         ElevatedButton(
@@ -295,28 +307,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   );
                                 },
-                                child: const Text('Editar URL', style: TextStyle(fontSize: 12)),
+                                child: const Text('Editar URL',
+                                    style: TextStyle(fontSize: 12)),
                               ),
                             ),
                             const SizedBox(width: 8),
                             OutlinedButton(
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                               onPressed: () async {
-                                await config.setBaseUrl(ApiConfig.defaultBaseUrl);
+                                await config
+                                    .setBaseUrl(ApiConfig.defaultBaseUrl);
                                 setModalState(() {});
                                 setState(() {});
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('URL restablecida por defecto')),
+                                    const SnackBar(
+                                        content: Text(
+                                            'URL restablecida por defecto')),
                                   );
                                 }
                               },
-                              child: const Text('Restablecer', style: TextStyle(fontSize: 12)),
+                              child: const Text('Restablecer',
+                                  style: TextStyle(fontSize: 12)),
                             ),
                           ],
                         ),
@@ -337,14 +355,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       icon: const Icon(Icons.notifications_none, size: 18),
                       label: const Text(
                         'Lanzar Notificación de Prueba',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                       onPressed: () async {
-                        await NotificationService.instance.showTestNotification(isDemo: false);
+                        await NotificationService.instance
+                            .showTestNotification(isDemo: false);
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Notificación enviada a la barra de Android'),
+                              content: Text(
+                                  'Notificación enviada a la barra de Android'),
                               duration: Duration(seconds: 2),
                             ),
                           );
@@ -385,7 +406,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.how_to_vote_outlined, size: 18, color: Colors.white),
+              child: const Icon(Icons.how_to_vote_outlined,
+                  size: 18, color: Colors.white),
             ),
             const SizedBox(width: 10),
             const Text(
@@ -410,7 +432,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             stream: OfflineSyncService.instance.countsStream,
             builder: (context, snapshot) {
               final counts = snapshot.data ?? {};
-              final pending = (counts['pending'] ?? 0) + (counts['failed'] ?? 0);
+              final pending =
+                  (counts['pending'] ?? 0) + (counts['failed'] ?? 0);
               return IconButton(
                 icon: Badge(
                   isLabelVisible: pending > 0,
@@ -426,7 +449,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SyncQueueScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const SyncQueueScreen()),
                   );
                 },
               );
@@ -444,7 +468,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () => _showDemoSettingsSheet(context),
           ),
           IconButton(
-            icon: const Icon(Icons.person_outline, color: Color(0xFF475569), size: 22),
+            icon: const Icon(Icons.person_outline,
+                color: Color(0xFF475569), size: 22),
             tooltip: 'Mi Perfil',
             onPressed: () {
               Navigator.push(
@@ -531,13 +556,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF1F5F9),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  (_currentUser?.rol ?? 'operador').toUpperCase(),
+                                  (_currentUser?.rol ?? 'operador')
+                                      .toUpperCase(),
                                   style: const TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
@@ -578,9 +605,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 stream: OfflineSyncService.instance.countsStream,
                 builder: (context, snapshot) {
                   final counts = snapshot.data ?? {};
-                  final pending = (counts['pending'] ?? 0) + (counts['failed'] ?? 0);
+                  final pending =
+                      (counts['pending'] ?? 0) + (counts['failed'] ?? 0);
                   return FutureBuilder<bool>(
-                    future: OfflineSyncService.instance.hasPendingOlderThan7Days(),
+                    future:
+                        OfflineSyncService.instance.hasPendingOlderThan7Days(),
                     builder: (context, olderSnap) {
                       final hasOlder = olderSnap.data == true;
                       return _buildSyncCard(context, pending, hasOlder);
@@ -598,7 +627,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   }
                   return Container(
                     margin: const EdgeInsets.only(top: 14),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFFBEB),
                       borderRadius: BorderRadius.circular(12),
@@ -606,7 +636,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.bolt, color: Color(0xFFD97706), size: 20),
+                        const Icon(Icons.bolt,
+                            color: Color(0xFFD97706), size: 20),
                         const SizedBox(width: 10),
                         const Expanded(
                           child: Text(
@@ -621,13 +652,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         TextButton(
                           onPressed: () => _showDemoSettingsSheet(context),
                           style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           child: const Text(
                             'Configurar',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -672,7 +705,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const OCRScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const OCRScreen()),
                       );
                     },
                   ),
@@ -685,7 +719,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const AudioCampaignsScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const AudioCampaignsScreen()),
                       );
                     },
                   ),
@@ -699,7 +734,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => OperatorStatsScreen(user: _currentUser),
+                          builder: (context) =>
+                              OperatorStatsScreen(user: _currentUser),
                         ),
                       );
                     },
@@ -714,7 +750,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ProfileScreen(user: _currentUser),
+                          builder: (context) =>
+                              ProfileScreen(user: _currentUser),
                         ),
                       );
                     },
@@ -818,7 +855,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         border: Border.all(
           color: hasOlder
               ? const Color(0xFFFCA5A5)
-              : (pending > 0 ? const Color(0xFFBFDBFE) : const Color(0xFFE2E8F0)),
+              : (pending > 0
+                  ? const Color(0xFFBFDBFE)
+                  : const Color(0xFFE2E8F0)),
         ),
       ),
       child: Column(
@@ -827,7 +866,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (hasOlder) ...[
             const Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 20),
+                Icon(Icons.warning_amber_rounded,
+                    color: Color(0xFFDC2626), size: 20),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -846,10 +886,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             children: [
               Icon(
-                pending > 0 ? Icons.cloud_upload_outlined : Icons.cloud_done_outlined,
+                pending > 0
+                    ? Icons.cloud_upload_outlined
+                    : Icons.cloud_done_outlined,
                 color: hasOlder
                     ? const Color(0xFFDC2626)
-                    : (pending > 0 ? const Color(0xFF2563EB) : const Color(0xFF16A34A)),
+                    : (pending > 0
+                        ? const Color(0xFF2563EB)
+                        : const Color(0xFF16A34A)),
                 size: 22,
               ),
               const SizedBox(width: 10),
@@ -863,7 +907,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     fontWeight: FontWeight.w600,
                     color: hasOlder
                         ? const Color(0xFF991B1B)
-                        : (pending > 0 ? const Color(0xFF1E40AF) : const Color(0xFF15803D)),
+                        : (pending > 0
+                            ? const Color(0xFF1E40AF)
+                            : const Color(0xFF15803D)),
                   ),
                 ),
               ),
@@ -872,14 +918,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   icon: const Icon(Icons.sync, size: 16),
-                  label: const Text('Sincronizar ahora', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  label: const Text('Sincronizar ahora',
+                      style:
+                          TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   onPressed: () async {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Iniciando sincronización por lotes...')),
+                      const SnackBar(
+                          content:
+                              Text('Iniciando sincronización por lotes...')),
                     );
                     await OfflineSyncService.instance.syncPendingQueue();
                   },

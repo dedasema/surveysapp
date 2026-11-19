@@ -141,10 +141,14 @@ class _SurveyReviewScreenState extends State<SurveyReviewScreen> {
 
     try {
       final baseUrl = AudioService.baseUrl;
-      final uri = Uri.parse('$baseUrl/public/entregas/${widget.entregaId}/respuestas');
+      final uri =
+          Uri.parse('$baseUrl/public/entregas/${widget.entregaId}/respuestas');
       final response = await http.post(
         uri,
-        headers: {'Content-Type': 'application/json', 'accept': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': 'application/json'
+        },
         body: jsonEncode(payload),
       );
 
@@ -152,7 +156,8 @@ class _SurveyReviewScreenState extends State<SurveyReviewScreen> {
         if (mounted) {
           _showSuccessDialog(
             title: '¡Encuesta Guardada!',
-            message: 'Las respuestas fueron sincronizadas exitosamente en el servidor.',
+            message:
+                'Las respuestas fueron sincronizadas exitosamente en el servidor.',
             isOffline: false,
           );
         }
@@ -193,7 +198,8 @@ class _SurveyReviewScreenState extends State<SurveyReviewScreen> {
     if (mounted) {
       _showSuccessDialog(
         title: 'Guardado Offline',
-        message: 'Sin conexión estable. La encuesta quedó guardada en el dispositivo y se sincronizará automáticamente al recuperar señal.',
+        message:
+            'Sin conexión estable. La encuesta quedó guardada en el dispositivo y se sincronizará automáticamente al recuperar señal.',
         isOffline: true,
       );
     }
@@ -326,18 +332,23 @@ class _SurveyReviewScreenState extends State<SurveyReviewScreen> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
                       : const Icon(Icons.send),
                   label: Text(
-                    _isSubmitting ? 'Guardando...' : 'Confirmar y Guardar Encuesta',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    _isSubmitting
+                        ? 'Guardando...'
+                        : 'Confirmar y Guardar Encuesta',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1565C0),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
               ),
@@ -366,14 +377,18 @@ class _SurveyReviewScreenState extends State<SurveyReviewScreen> {
                   backgroundColor: const Color(0xFF1565C0),
                   child: Text(
                     '$questionNumber',
-                    style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     pregunta.texto,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -437,7 +452,8 @@ class _SurveyReviewScreenState extends State<SurveyReviewScreen> {
         // Opción múltiple
         return Column(
           children: pregunta.opciones.map((opcion) {
-            final isChecked = _selectedMultiOptions[qid]?.contains(opcion.id) ?? false;
+            final isChecked =
+                _selectedMultiOptions[qid]?.contains(opcion.id) ?? false;
             return CheckboxListTile(
               title: Text(opcion.texto ?? 'Opción'),
               value: isChecked,

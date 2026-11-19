@@ -29,7 +29,8 @@ class NotificationService {
       requestSoundPermission: true,
     );
 
-    final InitializationSettings initializationSettings = InitializationSettings(
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
       macOS: initializationSettingsDarwin,
@@ -39,7 +40,7 @@ class NotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         if (kDebugMode) {
-          print('Notificación tocada con payload: ${response.payload}');
+          debugPrint('Notificación tocada con payload: ${response.payload}');
         }
       },
     );
@@ -85,7 +86,8 @@ class NotificationService {
     // Si el usuario desactivó las notificaciones en los ajustes de la app, no emitir alerta
     if (!AppConfigService.instance.isNotificationsEnabled) {
       if (kDebugMode) {
-        print('Notificación suprimida (notificaciones desactivadas por el usuario)');
+        debugPrint(
+            'Notificación suprimida (notificaciones desactivadas por el usuario)');
       }
       return;
     }
@@ -139,14 +141,16 @@ class NotificationService {
       await showNotification(
         id: notifId,
         title: '🎙️ Transcripción completada',
-        body: details ?? 'El audio de la entrega $entregaId fue procesado con éxito.',
+        body: details ??
+            'El audio de la entrega $entregaId fue procesado con éxito.',
         payload: 'audio_success:$entregaId',
       );
     } else {
       await showNotification(
         id: notifId,
         title: '⚠️ Error en transcripción',
-        body: details ?? 'Hubo un inconveniente al procesar el audio de la entrega $entregaId.',
+        body: details ??
+            'Hubo un inconveniente al procesar el audio de la entrega $entregaId.',
         payload: 'audio_error:$entregaId',
       );
     }
@@ -169,7 +173,8 @@ class NotificationService {
       await showNotification(
         id: notifId,
         title: '⚠️ Sincronización con advertencias',
-        body: '$syncedCount sincronizadas, pero $failedCount fallaron. Revisá la cola.',
+        body:
+            '$syncedCount sincronizadas, pero $failedCount fallaron. Revisá la cola.',
         payload: 'sync_warning',
       );
     }

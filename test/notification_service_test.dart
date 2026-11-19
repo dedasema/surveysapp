@@ -10,7 +10,8 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    test('initial values default to normal mode and notifications enabled', () async {
+    test('initial values default to normal mode and notifications enabled',
+        () async {
       final config = AppConfigService.instance;
       await config.init();
 
@@ -32,7 +33,8 @@ void main() {
       expect(config.pollingInterval, const Duration(seconds: 30));
     });
 
-    test('toggling notifications updates configuration flag and storage', () async {
+    test('toggling notifications updates configuration flag and storage',
+        () async {
       final config = AppConfigService.instance;
       await config.init();
 

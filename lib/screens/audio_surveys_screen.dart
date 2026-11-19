@@ -156,7 +156,8 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                 Text(
                   _error!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                  style:
+                      const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
@@ -166,7 +167,8 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                   ),
                   icon: const Icon(Icons.refresh, size: 18),
                   label: const Text('Reintentar'),
@@ -227,7 +229,8 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                   ),
                   icon: const Icon(Icons.refresh, size: 18),
                   label: const Text('Actualizar'),
@@ -253,7 +256,8 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
   }
 
   Widget _buildSurveyCard(AudioSurvey survey, int surveyNumber) {
-    final isResponded = survey.respondidoEn != null && survey.respondidoEn!.isNotEmpty;
+    final isResponded =
+        survey.respondidoEn != null && survey.respondidoEn!.isNotEmpty;
     final questionsCount = survey.plantilla.preguntas.length;
 
     return Container(
@@ -284,14 +288,18 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: isResponded ? const Color(0xFFF0FDF4) : const Color(0xFFEFF6FF),
+                      color: isResponded
+                          ? const Color(0xFFF0FDF4)
+                          : const Color(0xFFEFF6FF),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
                       child: Text(
                         '$surveyNumber',
                         style: TextStyle(
-                          color: isResponded ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
+                          color: isResponded
+                              ? const Color(0xFF16A34A)
+                              : const Color(0xFF2563EB),
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                         ),
@@ -304,7 +312,8 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          survey.destinatario != null && survey.destinatario!.isNotEmpty
+                          survey.destinatario != null &&
+                                  survey.destinatario!.isNotEmpty
                               ? survey.destinatario!
                               : 'Encuesta #$surveyNumber',
                           style: const TextStyle(
@@ -329,12 +338,17 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: isResponded ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
+                      color: isResponded
+                          ? const Color(0xFFF0FDF4)
+                          : const Color(0xFFFFFBEB),
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: isResponded ? const Color(0xFFBBF7D0) : const Color(0xFFFDE68A),
+                        color: isResponded
+                            ? const Color(0xFFBBF7D0)
+                            : const Color(0xFFFDE68A),
                       ),
                     ),
                     child: Text(
@@ -342,7 +356,9 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: isResponded ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                        color: isResponded
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFFD97706),
                       ),
                     ),
                   ),
@@ -387,14 +403,16 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 1),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             _getQuestionTypeText(question.tipoPreguntaId),
-                            style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                            style: const TextStyle(
+                                fontSize: 10, color: Color(0xFF64748B)),
                           ),
                         ),
                       ],
@@ -404,7 +422,8 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                 if (questionsCount > 2)
                   Text(
                     '+ ${questionsCount - 2} preguntas más en la pauta',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                    style:
+                        const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                   ),
               ],
               const SizedBox(height: 12),
@@ -420,7 +439,8 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.arrow_forward, size: 14, color: Color(0xFF2563EB)),
+                  const Icon(Icons.arrow_forward,
+                      size: 14, color: Color(0xFF2563EB)),
                 ],
               ),
             ],
@@ -478,7 +498,8 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                 child: Column(
                   children: [
                     ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 6),
                       leading: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
@@ -489,13 +510,16 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                       ),
                       title: const Text(
                         'Grabar Entrevista por Voz',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 14),
                       ),
                       subtitle: const Text(
                         'Grabación continua WAV con transcripción automática por IA.',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        style:
+                            TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                       ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF94A3B8)),
+                      trailing: const Icon(Icons.arrow_forward_ios,
+                          size: 14, color: Color(0xFF94A3B8)),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.push(
@@ -509,26 +533,32 @@ class _AudioSurveysScreenState extends State<AudioSurveysScreen> {
                         );
                       },
                     ),
-                    const Divider(height: 1, indent: 64, color: Color(0xFFE2E8F0)),
+                    const Divider(
+                        height: 1, indent: 64, color: Color(0xFFE2E8F0)),
                     ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 6),
                       leading: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: const Color(0xFFEFF6FF),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.dynamic_form_outlined, color: Color(0xFF2563EB)),
+                        child: const Icon(Icons.dynamic_form_outlined,
+                            color: Color(0xFF2563EB)),
                       ),
                       title: const Text(
                         'Encuesta Adaptativa (Paso a paso)',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 14),
                       ),
                       subtitle: const Text(
                         'Flujo guiado donde cada respuesta decide la siguiente pregunta.',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        style:
+                            TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                       ),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF94A3B8)),
+                      trailing: const Icon(Icons.arrow_forward_ios,
+                          size: 14, color: Color(0xFF94A3B8)),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.push(

@@ -31,7 +31,8 @@ class AudioService {
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
         final audioCampaigns = data
-            .where((campaign) => campaign['canal_id'] == 5 || campaign['canal_id'] == null)
+            .where((campaign) =>
+                campaign['canal_id'] == 5 || campaign['canal_id'] == null)
             .map((campaign) => Campaign.fromJson(campaign))
             .toList();
 
@@ -74,7 +75,8 @@ class AudioService {
                 preguntas: [],
               );
 
-        final List<dynamic> entregasList = data['entregas'] as List<dynamic>? ?? [];
+        final List<dynamic> entregasList =
+            data['entregas'] as List<dynamic>? ?? [];
 
         List<AudioSurvey> surveys = [];
         if (entregasList.isNotEmpty) {
@@ -82,7 +84,8 @@ class AudioService {
             final dest = entrega['destinatario'];
             String? destinatarioNombre;
             if (dest is Map<String, dynamic>) {
-              destinatarioNombre = dest['nombre'] ?? dest['email'] ?? dest['telefono'];
+              destinatarioNombre =
+                  dest['nombre'] ?? dest['email'] ?? dest['telefono'];
             } else if (dest is String) {
               destinatarioNombre = dest;
             }
@@ -90,7 +93,8 @@ class AudioService {
               id: (entrega['id'] ?? '').toString(),
               plantilla: plantilla,
               destinatario: destinatarioNombre,
-              creadoEn: (entrega['enviado_en'] ?? data['creado_en'])?.toString(),
+              creadoEn:
+                  (entrega['enviado_en'] ?? data['creado_en'])?.toString(),
               respondidoEn: entrega['respondido_en']?.toString(),
             );
           }).toList();
@@ -164,7 +168,8 @@ class AudioService {
             id: (entrega['id'] ?? '').toString(),
             plantilla: defaultTemplate,
             destinatario: destinatarioNombre,
-            creadoEn: (entrega['enviado_en'] ?? entrega['creado_en'])?.toString(),
+            creadoEn:
+                (entrega['enviado_en'] ?? entrega['creado_en'])?.toString(),
             respondidoEn: entrega['respondido_en']?.toString(),
           );
         }).toList();
@@ -179,15 +184,18 @@ class AudioService {
     }
 
     // 3. Fallback definitivo en Modo Avión: Recuperar encuestas cacheadas en SQLite
-    final localCached = await DatabaseHelper.instance.getCachedSurveys(campaignId);
+    final localCached =
+        await DatabaseHelper.instance.getCachedSurveys(campaignId);
     if (localCached.isNotEmpty) {
       return localCached;
     }
 
-    throw Exception('Sin conexión y no hay encuestas descargadas localmente para esta campaña.');
+    throw Exception(
+        'Sin conexión y no hay encuestas descargadas localmente para esta campaña.');
   }
 
-  Future<AudioTranscriptionResponse> transcribeAudio(String entregaId, File audioFile) async {
+  Future<AudioTranscriptionResponse> transcribeAudio(
+      String entregaId, File audioFile) async {
     final token = await _getToken();
     final fileName = '$entregaId.wav';
     final bytes = await audioFile.readAsBytes();
@@ -213,12 +221,14 @@ class AudioService {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 202) {
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 202) {
         final data = json.decode(response.body);
         return AudioTranscriptionResponse.fromJson(data);
       }
     } catch (e) {
-      print('Aviso en /encuestas/$entregaId/audio-respuesta: $e');
+      debugPrint('Aviso en /encuestas/$entregaId/audio-respuesta: $e');
     }
 
     // 2. Fallback: Probar ruta legacy POST /public/entregas/{entrega_id}/audio
@@ -242,18 +252,22 @@ class AudioService {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 202) {
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 202) {
         final data = json.decode(response.body);
         return AudioTranscriptionResponse.fromJson(data);
       } else {
-        throw Exception('Error en transcripción: ${response.statusCode} - ${response.body}');
+        throw Exception(
+            'Error en transcripción: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
       throw Exception('Error al transcribir audio: $e');
     }
   }
 
-  Future<AudioTranscriptionResponse?> checkAudioStatus(String entregaId, {String? taskId}) async {
+  Future<AudioTranscriptionResponse?> checkAudioStatus(String entregaId,
+      {String? taskId}) async {
     try {
       final token = await _getToken();
       final headers = {
@@ -299,7 +313,7 @@ class AudioService {
       }
       return null;
     } catch (e) {
-      print('Error consultando estado de audio: $e');
+      debugPrint('Error consultando estado de audio: $e');
       return null;
     }
   }
@@ -326,7 +340,8 @@ class AudioService {
         if (statusResp.status == 'ok' ||
             statusResp.status == 'completed' ||
             statusResp.status == 'completado' ||
-            (statusResp.respuestas.isNotEmpty || statusResp.transcripcion.isNotEmpty)) {
+            (statusResp.respuestas.isNotEmpty ||
+                statusResp.transcripcion.isNotEmpty)) {
           // Disparar notificación local nativa de éxito
           final previewText = statusResp.transcripcion.isNotEmpty
               ? (statusResp.transcripcion.length > 50
@@ -336,10 +351,12 @@ class AudioService {
           await NotificationService.instance.notifyAudioTranscription(
             entregaId: entregaId,
             isSuccess: true,
-            details: previewText != null ? 'Transcripción: "$previewText"' : null,
+            details:
+                previewText != null ? 'Transcripción: "$previewText"' : null,
           );
           return statusResp;
-        } else if (statusResp.status == 'error' || statusResp.status == 'failed') {
+        } else if (statusResp.status == 'error' ||
+            statusResp.status == 'failed') {
           await NotificationService.instance.notifyAudioTranscription(
             entregaId: entregaId,
             isSuccess: false,
@@ -357,6 +374,7 @@ class AudioService {
       isSuccess: false,
       details: 'Tiempo de espera agotado al transcribir el audio.',
     );
-    throw Exception('Tiempo de espera agotado esperando la transcripción de audio.');
+    throw Exception(
+        'Tiempo de espera agotado esperando la transcripción de audio.');
   }
 }

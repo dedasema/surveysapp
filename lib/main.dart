@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'services/app_config_service.dart';
+
+/// DSN de Sentry para captura de errores no controlados, configurable por --dart-define=SENTRY_DSN=...
+const String kSentryDsn = String.fromEnvironment(
+  'SENTRY_DSN',
+  defaultValue: '',
+);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,16 +20,28 @@ void main() async {
   } catch (_) {}
   await AppConfigService.instance.init();
   await NotificationService.instance.init();
-  runApp(const SurveysApp());
+
+  if (kSentryDsn.isNotEmpty) {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = kSentryDsn;
+        options.tracesSampleRate = 1.0;
+      },
+      appRunner: () => runApp(const SurveysApp()),
+    );
+  } else {
+    runApp(const SurveysApp());
+  }
 }
 
+/// Widget raíz de la aplicación SurveysApp
 class SurveysApp extends StatelessWidget {
   const SurveysApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Encuestas Multicanal IA',
+      title: 'SurveysApp - Encuestas de Campo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         primaryColor: const Color(0xFF1565C0),
@@ -61,6 +80,7 @@ class SurveysApp extends StatelessWidget {
   }
 }
 
+/// Envoltorio de autenticación para enrutamiento inicial
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
 
@@ -84,15 +104,19 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     if (token != null && token.isNotEmpty) {
       final user = await authService.getCurrentUser();
-      setState(() {
-        _isLoggedIn = user != null;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoggedIn = user != null;
+          _isLoading = false;
+        });
+      }
     } else {
-      setState(() {
-        _isLoggedIn = false;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoggedIn = false;
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -106,6 +130,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
       );
     }
 
-    return _isLoggedIn ? const DashboardScreen() : const LoginScreen();
+    if (_isLoggedIn) {
+      return const DashboardScreen();
+    }
+
+    return const LoginScreen();
   }
 }

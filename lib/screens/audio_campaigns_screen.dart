@@ -186,7 +186,8 @@ class _AudioCampaignsScreenState extends State<AudioCampaignsScreen> {
                 Text(
                   _error!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                  style:
+                      const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
@@ -196,7 +197,8 @@ class _AudioCampaignsScreenState extends State<AudioCampaignsScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                   ),
                   icon: const Icon(Icons.refresh, size: 18),
                   label: const Text('Reintentar'),
@@ -257,7 +259,8 @@ class _AudioCampaignsScreenState extends State<AudioCampaignsScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                   ),
                   icon: const Icon(Icons.refresh, size: 18),
                   label: const Text('Actualizar'),
@@ -361,7 +364,8 @@ class _AudioCampaignsScreenState extends State<AudioCampaignsScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: statusBg,
                       borderRadius: BorderRadius.circular(8),
@@ -382,18 +386,22 @@ class _AudioCampaignsScreenState extends State<AudioCampaignsScreen> {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Icon(Icons.schedule, size: 14, color: Color(0xFF94A3B8)),
+                  const Icon(Icons.schedule,
+                      size: 14, color: Color(0xFF94A3B8)),
                   const SizedBox(width: 6),
                   Text(
                     'Programada: ${_formatDate(campaign.programadaEn)}',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    style:
+                        const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                   const Spacer(),
-                  const Icon(Icons.calendar_today_outlined, size: 14, color: Color(0xFF94A3B8)),
+                  const Icon(Icons.calendar_today_outlined,
+                      size: 14, color: Color(0xFF94A3B8)),
                   const SizedBox(width: 6),
                   Text(
                     'Creada: ${_formatDate(campaign.creadoEn)}',
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    style:
+                        const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                 ],
               ),
@@ -410,7 +418,8 @@ class _AudioCampaignsScreenState extends State<AudioCampaignsScreen> {
                     ),
                   ),
                   SizedBox(width: 4),
-                  Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFF2563EB)),
+                  Icon(Icons.arrow_forward_ios,
+                      size: 12, color: Color(0xFF2563EB)),
                 ],
               ),
             ],

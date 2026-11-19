@@ -23,9 +23,8 @@ class AppConfigService extends ChangeNotifier {
   /// Retorna el intervalo de sondeo (polling).
   /// En modo Demo: 1 segundo para visualización instantánea.
   /// En modo Normal: 30 segundos para ahorro de batería y red.
-  Duration get pollingInterval => _isDemoMode
-      ? const Duration(seconds: 1)
-      : const Duration(seconds: 30);
+  Duration get pollingInterval =>
+      _isDemoMode ? const Duration(seconds: 1) : const Duration(seconds: 30);
 
   Future<void> init() async {
     if (_isInitialized) return;

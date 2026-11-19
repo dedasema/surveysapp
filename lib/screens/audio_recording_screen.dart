@@ -196,7 +196,8 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
       await Future.delayed(const Duration(seconds: 1));
       if (_isRecording) {
         setState(() {
-          _recordingDuration = Duration(seconds: _recordingDuration.inSeconds + 1);
+          _recordingDuration =
+              Duration(seconds: _recordingDuration.inSeconds + 1);
         });
       }
       return _isRecording;
@@ -243,7 +244,8 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Row(
               children: [
                 Icon(Icons.cloud_off, color: Colors.orange),
@@ -274,7 +276,8 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
   }
 
   void _showAsyncProcessingDialog() {
-    String currentStage = 'pending'; // 'pending', 'transcribing', 'completed', 'error'
+    String currentStage =
+        'pending'; // 'pending', 'transcribing', 'completed', 'error'
     String stageMessage = 'Subiendo audio al servidor...';
     String? errorDetail;
     StateSetter? dialogSetState;
@@ -288,12 +291,15 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
             dialogSetState = setModalState;
 
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               title: const Row(
                 children: [
                   Icon(Icons.hub, color: Color(0xFF1565C0)),
                   SizedBox(width: 10),
-                  Text('Orquestación Asíncrona', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text('Orquestación Asíncrona',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ],
               ),
               content: Column(
@@ -304,7 +310,10 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
                     subtitle: 'Audio en cola en el servidor',
                     state: currentStage == 'pending'
                         ? 'active'
-                        : (currentStage == 'error' && stageMessage.contains('Subiendo') ? 'error' : 'done'),
+                        : (currentStage == 'error' &&
+                                stageMessage.contains('Subiendo')
+                            ? 'error'
+                            : 'done'),
                   ),
                   const SizedBox(height: 12),
                   _buildStageItem(
@@ -312,27 +321,37 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
                     subtitle: 'Modelo Gemini transcribiendo voz',
                     state: currentStage == 'transcribing'
                         ? 'active'
-                        : (currentStage == 'completed' ? 'done' : (currentStage == 'error' ? 'error' : 'waiting')),
+                        : (currentStage == 'completed'
+                            ? 'done'
+                            : (currentStage == 'error' ? 'error' : 'waiting')),
                   ),
                   const SizedBox(height: 12),
                   _buildStageItem(
                     title: '3. Inferencia de Respuestas',
                     subtitle: 'Extracción contra la plantilla',
-                    state: currentStage == 'completed' ? 'done' : (currentStage == 'error' ? 'error' : 'waiting'),
+                    state: currentStage == 'completed'
+                        ? 'done'
+                        : (currentStage == 'error' ? 'error' : 'waiting'),
                   ),
                   const SizedBox(height: 16),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: currentStage == 'error' ? Colors.red[50] : Colors.blue[50],
+                      color: currentStage == 'error'
+                          ? Colors.red[50]
+                          : Colors.blue[50],
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      currentStage == 'error' ? (errorDetail ?? 'Error de procesamiento') : stageMessage,
+                      currentStage == 'error'
+                          ? (errorDetail ?? 'Error de procesamiento')
+                          : stageMessage,
                       style: TextStyle(
                         fontSize: 12,
-                        color: currentStage == 'error' ? Colors.red[800] : const Color(0xFF1565C0),
+                        color: currentStage == 'error'
+                            ? Colors.red[800]
+                            : const Color(0xFF1565C0),
                         fontWeight: FontWeight.w500,
                       ),
                       textAlign: TextAlign.center,
@@ -394,7 +413,8 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
         await Future.delayed(const Duration(milliseconds: 600));
 
         if (mounted) {
-          Navigator.of(context, rootNavigator: true).pop(); // Cerrar modal de estados
+          Navigator.of(context, rootNavigator: true)
+              .pop(); // Cerrar modal de estados
           _showTranscriptionResult(finalResponse);
         }
       } catch (e) {
@@ -414,17 +434,20 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
     Widget leadingWidget;
 
     if (state == 'done') {
-      leadingWidget = const Icon(Icons.check_circle, color: Colors.green, size: 22);
+      leadingWidget =
+          const Icon(Icons.check_circle, color: Colors.green, size: 22);
     } else if (state == 'active') {
       leadingWidget = const SizedBox(
         width: 20,
         height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1565C0)),
+        child:
+            CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1565C0)),
       );
     } else if (state == 'error') {
       leadingWidget = const Icon(Icons.error, color: Colors.red, size: 22);
     } else {
-      leadingWidget = const Icon(Icons.radio_button_unchecked, color: Colors.grey, size: 22);
+      leadingWidget = const Icon(Icons.radio_button_unchecked,
+          color: Colors.grey, size: 22);
     }
 
     return Row(
@@ -507,12 +530,12 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
               else if (response.payloadEnviado['respuestas_preguntas'] != null)
                 ...((response.payloadEnviado['respuestas_preguntas'] as List)
                     .map((respuesta) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    '• ${respuesta['texto'] ?? respuesta['numero'] ?? 'Opción seleccionada'}',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                )))
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            '• ${respuesta['texto'] ?? respuesta['numero'] ?? 'Opción seleccionada'}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        )))
               else
                 const Text(
                   'Sin respuestas detectadas.',
@@ -624,7 +647,7 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          widget.survey.plantilla.descripcion?? '-',
+                          widget.survey.plantilla.descripcion ?? '-',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -680,10 +703,13 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
                     height: 140,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _isRecording ? Colors.red : const Color(0xFF1565C0),
+                      color:
+                          _isRecording ? Colors.red : const Color(0xFF1565C0),
                       boxShadow: [
                         BoxShadow(
-                          color: (_isRecording ? Colors.red : const Color(0xFF1565C0))
+                          color: (_isRecording
+                                  ? Colors.red
+                                  : const Color(0xFF1565C0))
                               .withOpacity(0.3),
                           blurRadius: 25,
                           spreadRadius: _isRecording ? 15 : 8,
@@ -708,8 +734,8 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
             _isRecording
                 ? 'Grabando...'
                 : _hasRecording
-                ? 'Grabación lista'
-                : 'Toca para grabar',
+                    ? 'Grabación lista'
+                    : 'Toca para grabar',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20,
@@ -742,7 +768,8 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(7, (index) {
                       final delay = index * 0.15;
-                      final animationValue = (_waveAnimation.value + delay) % 1.0;
+                      final animationValue =
+                          (_waveAnimation.value + delay) % 1.0;
                       return Container(
                         width: 5,
                         height: 15 + (25 * animationValue),
@@ -800,7 +827,7 @@ class _AudioRecordingScreenState extends State<AudioRecordingScreen>
                           LinearProgressIndicator(
                             value: _playbackDuration.inMilliseconds > 0
                                 ? _playbackPosition.inMilliseconds /
-                                _playbackDuration.inMilliseconds
+                                    _playbackDuration.inMilliseconds
                                 : 0.0,
                           ),
                           const SizedBox(height: 4),

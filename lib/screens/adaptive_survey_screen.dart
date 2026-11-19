@@ -24,7 +24,8 @@ class AdaptiveSurveyScreen extends StatefulWidget {
   State<AdaptiveSurveyScreen> createState() => _AdaptiveSurveyScreenState();
 }
 
-class _AdaptiveSurveyScreenState extends State<AdaptiveSurveyScreen> with SingleTickerProviderStateMixin {
+class _AdaptiveSurveyScreenState extends State<AdaptiveSurveyScreen>
+    with SingleTickerProviderStateMixin {
   bool _isLoading = true;
   bool _isSubmittingStep = false;
   String? _errorMessage;
@@ -100,17 +101,22 @@ class _AdaptiveSurveyScreenState extends State<AdaptiveSurveyScreen> with Single
     // Consultar al backend para iniciar sesión adaptativa
     try {
       final baseUrl = AudioService.baseUrl;
-      final uri = Uri.parse('$baseUrl/public/entregas/${widget.entregaId}/adaptativa/iniciar');
+      final uri = Uri.parse(
+          '$baseUrl/public/entregas/${widget.entregaId}/adaptativa/iniciar');
 
       final response = await http.post(
         uri,
-        headers: {'Content-Type': 'application/json', 'accept': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': 'application/json'
+        },
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         setState(() {
-          _session = AdaptiveSession.fromJson(data, fallbackEntregaId: widget.entregaId);
+          _session = AdaptiveSession.fromJson(data,
+              fallbackEntregaId: widget.entregaId);
           _isLoading = false;
         });
         _transitionController.forward();
@@ -213,11 +219,15 @@ class _AdaptiveSurveyScreenState extends State<AdaptiveSurveyScreen> with Single
     if (isOnline && !_session!.sesionId.startsWith('local_')) {
       try {
         final baseUrl = AudioService.baseUrl;
-        final uri = Uri.parse('$baseUrl/public/entregas/${widget.entregaId}/adaptativa/siguiente');
+        final uri = Uri.parse(
+            '$baseUrl/public/entregas/${widget.entregaId}/adaptativa/siguiente');
 
         final response = await http.post(
           uri,
-          headers: {'Content-Type': 'application/json', 'accept': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+            'accept': 'application/json'
+          },
           body: jsonEncode({
             'sesion_id': _session!.sesionId,
             'entrega_id': widget.entregaId,
@@ -227,7 +237,8 @@ class _AdaptiveSurveyScreenState extends State<AdaptiveSurveyScreen> with Single
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           final data = jsonDecode(response.body);
-          final updatedSession = AdaptiveSession.fromJson(data, fallbackEntregaId: widget.entregaId);
+          final updatedSession = AdaptiveSession.fromJson(data,
+              fallbackEntregaId: widget.entregaId);
           _advanceToNextQuestion(updatedSession);
           return;
         }
@@ -290,10 +301,14 @@ class _AdaptiveSurveyScreenState extends State<AdaptiveSurveyScreen> with Single
     if (isOnline) {
       try {
         final baseUrl = AudioService.baseUrl;
-        final uri = Uri.parse('$baseUrl/public/entregas/${widget.entregaId}/respuestas');
+        final uri = Uri.parse(
+            '$baseUrl/public/entregas/${widget.entregaId}/respuestas');
         final response = await http.post(
           uri,
-          headers: {'Content-Type': 'application/json', 'accept': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+            'accept': 'application/json'
+          },
           body: jsonEncode(payload),
         );
 
@@ -334,7 +349,8 @@ class _AdaptiveSurveyScreenState extends State<AdaptiveSurveyScreen> with Single
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(isOffline ? Icons.cloud_off : Icons.check_circle, color: isOffline ? Colors.orange : Colors.green),
+            Icon(isOffline ? Icons.cloud_off : Icons.check_circle,
+                color: isOffline ? Colors.orange : Colors.green),
             const SizedBox(width: 10),
             const Text('¡Encuesta Finalizada!'),
           ],
@@ -377,7 +393,9 @@ class _AdaptiveSurveyScreenState extends State<AdaptiveSurveyScreen> with Single
               const SizedBox(height: 16),
               Text(_errorMessage!, style: const TextStyle(fontSize: 16)),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _initAdaptiveSession, child: const Text('Reintentar')),
+              ElevatedButton(
+                  onPressed: _initAdaptiveSession,
+                  child: const Text('Reintentar')),
             ],
           ),
         ),
@@ -411,17 +429,24 @@ class _AdaptiveSurveyScreenState extends State<AdaptiveSurveyScreen> with Single
               children: [
                 Text(
                   'Pregunta #$paso',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1565C0)),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF1565C0)),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE3F2FD),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
                     'Modo Adaptativo Dinámico',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1565C0)),
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1565C0)),
                   ),
                 ),
               ],
@@ -433,7 +458,9 @@ class _AdaptiveSurveyScreenState extends State<AdaptiveSurveyScreen> with Single
               padding: const EdgeInsets.all(20),
               child: FadeTransition(
                 opacity: _fadeAnimation,
-                child: pregunta != null ? _buildQuestionContent(pregunta) : const SizedBox(),
+                child: pregunta != null
+                    ? _buildQuestionContent(pregunta)
+                    : const SizedBox(),
               ),
             ),
           ),
@@ -460,17 +487,20 @@ class _AdaptiveSurveyScreenState extends State<AdaptiveSurveyScreen> with Single
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
                       )
                     : const Icon(Icons.arrow_forward),
                 label: Text(
                   _isSubmittingStep ? 'Procesando paso...' : 'Continuar',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1565C0),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ),
@@ -495,15 +525,18 @@ class _AdaptiveSurveyScreenState extends State<AdaptiveSurveyScreen> with Single
             ),
             const SizedBox(height: 8),
             Text(
-              pregunta.obligatorio ? 'Respuesta obligatoria' : 'Respuesta opcional',
+              pregunta.obligatorio
+                  ? 'Respuesta obligatoria'
+                  : 'Respuesta opcional',
               style: TextStyle(
                 fontSize: 12,
-                color: pregunta.obligatorio ? Colors.orange[800] : Colors.grey[600],
+                color: pregunta.obligatorio
+                    ? Colors.orange[800]
+                    : Colors.grey[600],
                 fontWeight: FontWeight.w600,
               ),
             ),
             const Divider(height: 32),
-
             if (pregunta.tipoPreguntaId == 1) ...[
               TextFormField(
                 controller: _textController,

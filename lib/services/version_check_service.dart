@@ -38,7 +38,10 @@ class AppVersionInfo {
       tamanoMb: sizeMb,
       sha256: (json['sha256'] ?? '').toString(),
       fecha: (json['fecha'] ?? json['updatedAt'] ?? '').toString(),
-      androidMinimo: (json['android_minimo'] ?? json['minAndroidVersion'] ?? 'Android 7.0 (API 24)').toString(),
+      androidMinimo: (json['android_minimo'] ??
+              json['minAndroidVersion'] ??
+              'Android 7.0 (API 24)')
+          .toString(),
       novedades: novedadesList,
       apkUrl: (json['apkUrl'] ?? '/downloads/surveysaas.apk').toString(),
     );
@@ -90,7 +93,8 @@ class VersionCheckService {
       }
     } catch (e) {
       // Si no hay red o la consulta falla, la app sigue en silencio sin interrumpir al operador
-      debugPrint('Aviso: Verificación de versión no disponible en este momento: $e');
+      debugPrint(
+          'Aviso: Verificación de versión no disponible en este momento: $e');
     }
     return null;
   }
@@ -98,8 +102,10 @@ class VersionCheckService {
   /// Compara dos versiones semánticas (ej: '1.0.1' > '1.0.0')
   bool _isVersionNewer(String remote, String local) {
     try {
-      final remoteParts = remote.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-      final localParts = local.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      final remoteParts =
+          remote.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      final localParts =
+          local.split('.').map((e) => int.tryParse(e) ?? 0).toList();
 
       for (int i = 0; i < remoteParts.length && i < localParts.length; i++) {
         if (remoteParts[i] > localParts[i]) return true;
@@ -125,10 +131,12 @@ class VersionCheckService {
                 color: const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.system_update_alt, color: Color(0xFF2563EB), size: 20),
+              child: const Icon(Icons.system_update_alt,
+                  color: Color(0xFF2563EB), size: 20),
             ),
             const SizedBox(width: 10),
-            Text('Nueva Versión ${info.version}', style: const TextStyle(fontSize: 16)),
+            Text('Nueva Versión ${info.version}',
+                style: const TextStyle(fontSize: 16)),
           ],
         ),
         content: Column(
@@ -137,29 +145,39 @@ class VersionCheckService {
           children: [
             Text(
               'Tamaño: ${info.tamanoMb} MB  •  ${info.androidMinimo}',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 12),
             const Text(
               'Novedades:',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A)),
             ),
             const SizedBox(height: 6),
             ...info.novedades.map((nov) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('• ', style: TextStyle(color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
-                  Expanded(
-                    child: Text(
-                      nov,
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF334155)),
-                    ),
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('• ',
+                          style: TextStyle(
+                              color: Color(0xFF2563EB),
+                              fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: Text(
+                          nov,
+                          style: const TextStyle(
+                              fontSize: 12, color: Color(0xFF334155)),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            )),
+                )),
           ],
         ),
         actions: [
@@ -171,7 +189,8 @@ class VersionCheckService {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2563EB),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () {
               Navigator.pop(ctx);
