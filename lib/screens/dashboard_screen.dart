@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/auth_models.dart';
 import '../services/auth_service.dart';
+import '../config/api_config.dart';
 import 'profile_screen.dart';
 import 'ocr_screen.dart';
 import 'audio_campaigns_screen.dart';
@@ -21,11 +23,32 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   User? _currentUser;
   bool _isLoading = true;
+  StreamSubscription<bool>? _sessionSub;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _sessionSub = AuthService.instance.sessionExpiredStream.listen((expired) {
+      if (expired && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tu sesión ha expirado. Por favor ingresa nuevamente.'),
+            backgroundColor: Color(0xFFDC2626),
+          ),
+        );
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _sessionSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadUserData() async {
@@ -180,6 +203,115 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             setModalState(() {});
                             setState(() {});
                           },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.dns_outlined, size: 18, color: Color(0xFF2563EB)),
+                            SizedBox(width: 8),
+                            Text(
+                              'Servidor Backend (URL Base)',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Activa: ${config.baseUrl}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF475569),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  final controller = TextEditingController(text: config.baseUrl);
+                                  showDialog(
+                                    context: context,
+                                    builder: (dlgContext) => AlertDialog(
+                                      title: const Text('Cambiar URL del Backend'),
+                                      content: TextField(
+                                        controller: controller,
+                                        decoration: const InputDecoration(
+                                          hintText: 'http://ip_o_dominio:8000',
+                                          labelText: 'URL Base',
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(dlgContext),
+                                          child: const Text('Cancelar'),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            final val = controller.text.trim();
+                                            if (val.isNotEmpty) {
+                                              await config.setBaseUrl(val);
+                                              if (dlgContext.mounted) {
+                                                Navigator.pop(dlgContext);
+                                              }
+                                              setModalState(() {});
+                                              setState(() {});
+                                            }
+                                          },
+                                          child: const Text('Guardar'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                                child: const Text('Editar URL', style: TextStyle(fontSize: 12)),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () async {
+                                await config.setBaseUrl(ApiConfig.defaultBaseUrl);
+                                setModalState(() {});
+                                setState(() {});
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('URL restablecida por defecto')),
+                                  );
+                                }
+                              },
+                              child: const Text('Restablecer', style: TextStyle(fontSize: 12)),
+                            ),
+                          ],
                         ),
                       ],
                     ),
